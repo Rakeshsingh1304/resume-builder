@@ -23,9 +23,20 @@ interface ExperienceEntry {
     description?: string;
 }
 
+interface EducationEntry {
+    id: string;
+    institution?: string;
+    degree?: string;
+    fieldOfStudy?: string;
+    startDate?: string;
+    endDate?: string;
+}
+
 interface ResumeContent {
     personalInfo?: PersonalInfo;
     experience?: ExperienceEntry[];
+    education?: EducationEntry[];
+    skills?: string[];
 }
 
 interface Resume {
@@ -40,6 +51,9 @@ export default function ResumeBuilderPage() {
     const [resume, setResume] = useState<Resume | null>(null);
     const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({});
     const [experience, setExperience] = useState<ExperienceEntry[]>([]);
+    const [education, setEducation] = useState<EducationEntry[]>([]);
+    const [skills, setSkills] = useState<string[]>([]);
+    const [skillInput, setSkillInput] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -50,6 +64,8 @@ export default function ResumeBuilderPage() {
             setResume(data);
             setPersonalInfo(data.content?.personalInfo || {});
             setExperience(data.content?.experience || []);
+            setEducation(data.content?.education || []);
+            setSkills(data.content?.skills || []);
             setLoading(false);
         }
         load();
@@ -90,10 +106,59 @@ export default function ResumeBuilderPage() {
         setExperience((prev) => prev.filter((entry) => entry.id !== entryId));
     }
 
+    function addEducation() {
+        setEducation((prev) => [
+            ...prev,
+            {
+                id: crypto.randomUUID(),
+                institution: "",
+                degree: "",
+                fieldOfStudy: "",
+                startDate: "",
+                endDate: "",
+            },
+        ]);
+    }
+
+    function updateEducation(
+        entryId: string,
+        field: keyof EducationEntry,
+        value: string
+    ) {
+        setEducation((prev) =>
+            prev.map((entry) =>
+                entry.id === entryId ? { ...entry, [field]: value } : entry
+            )
+        );
+    }
+
+    function removeEducation(entryId: string) {
+        setEducation((prev) => prev.filter((entry) => entry.id !== entryId));
+    }
+
+    function addSkill() {
+        const trimmed = skillInput.trim();
+        if (trimmed && !skills.includes(trimmed)) {
+            setSkills((prev) => [...prev, trimmed]);
+        }
+        setSkillInput("");
+    }
+
+    function removeSkill(skillToRemove: string) {
+        setSkills((prev) => prev.filter((s) => s !== skillToRemove));
+    }
+
+    function handleSkillKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            addSkill();
+        }
+    }
+
     async function handleSave() {
         setSaving(true);
         const token = await getToken();
-        const updatedContent = { ...resume?.content, personalInfo, experience };
+        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills };
         await apiFetch(`/api/resumes/${id}`, token, {
             method: "PATCH",
             body: JSON.stringify({ content: updatedContent }),
@@ -257,6 +322,119 @@ export default function ResumeBuilderPage() {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            <div className="space-y-4 border rounded p-6 mt-6">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-semibold">Education</h2>
+                    <button
+                        onClick={addEducation}
+                        className="text-sm text-blue-600 hover:underline"
+                    >
+                        + Add Education
+                    </button>
+                </div>
+
+                {education.length === 0 && (
+                    <p className="text-gray-500 text-sm">No education added yet.</p>
+                )}
+
+                {education.map((entry) => (
+                    <div key={entry.id} className="border rounded p-4 space-y-3 relative">
+                        <button
+                            onClick={() => removeEducation(entry.id)}
+                            className="absolute top-3 right-3 text-red-500 text-sm hover:underline"
+                        >
+                            Remove
+                        </button>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Institution</label>
+                            <input
+                                type="text"
+                                value={entry.institution || ""}
+                                onChange={(e) => updateEducation(entry.id, "institution", e.target.value)}
+                                className="w-full border rounded px-3 py-2"
+                                placeholder="Stanford University"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Degree</label>
+                            <input
+                                type="text"
+                                value={entry.degree || ""}
+                                onChange={(e) => updateEducation(entry.id, "degree", e.target.value)}
+                                className="w-full border rounded px-3 py-2"
+                                placeholder="Bachelor of Technology"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Field of Study</label>
+                            <input
+                                type="text"
+                                value={entry.fieldOfStudy || ""}
+                                onChange={(e) => updateEducation(entry.id, "fieldOfStudy", e.target.value)}
+                                className="w-full border rounded px-3 py-2"
+                                placeholder="Computer Science"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Start Date</label>
+                                <input
+                                    type="month"
+                                    value={entry.startDate || ""}
+                                    onChange={(e) => updateEducation(entry.id, "startDate", e.target.value)}
+                                    className="w-full border rounded px-3 py-2"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">End Date</label>
+                                <input
+                                    type="month"
+                                    value={entry.endDate || ""}
+                                    onChange={(e) => updateEducation(entry.id, "endDate", e.target.value)}
+                                    className="w-full border rounded px-3 py-2"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="space-y-4 border rounded p-6 mt-6">
+                <h2 className="text-lg font-semibold">Skills</h2>
+
+                <div>
+                    <input
+                        type="text"
+                        value={skillInput}
+                        onChange={(e) => setSkillInput(e.target.value)}
+                        onKeyDown={handleSkillKeyDown}
+                        className="w-full border rounded px-3 py-2"
+                        placeholder="Type a skill and press Enter (e.g. React)"
+                    />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                    {skills.map((skill) => (
+                        <span
+                            key={skill}
+                            className="bg-gray-100 border rounded-full px-3 py-1 text-sm flex items-center gap-2"
+                        >
+                            {skill}
+                            <button
+                                onClick={() => removeSkill(skill)}
+                                className="text-red-500 hover:text-red-700"
+                            >
+                                ×
+                            </button>
+                        </span>
+                    ))}
+                </div>
             </div>
 
             <button
