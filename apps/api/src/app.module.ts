@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { ResumesModule } from './resumes/resumes.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ResumesModule } from './resumes/resumes.module';
     PrismaModule,
     WebhooksModule,
     ResumesModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

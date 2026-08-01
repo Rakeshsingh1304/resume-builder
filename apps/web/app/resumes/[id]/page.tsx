@@ -37,6 +37,7 @@ interface ResumeContent {
     experience?: ExperienceEntry[];
     education?: EducationEntry[];
     skills?: string[];
+    summary?: string;
 }
 
 interface Resume {
@@ -54,6 +55,8 @@ export default function ResumeBuilderPage() {
     const [education, setEducation] = useState<EducationEntry[]>([]);
     const [skills, setSkills] = useState<string[]>([]);
     const [skillInput, setSkillInput] = useState("");
+    const [summary, setSummary] = useState("");
+    const [generatingSummary, setGeneratingSummary] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -66,6 +69,7 @@ export default function ResumeBuilderPage() {
             setExperience(data.content?.experience || []);
             setEducation(data.content?.education || []);
             setSkills(data.content?.skills || []);
+            setSummary(data.content?.summary || "");
             setLoading(false);
         }
         load();
@@ -158,12 +162,39 @@ export default function ResumeBuilderPage() {
     async function handleSave() {
         setSaving(true);
         const token = await getToken();
-        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills };
+        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary };
         await apiFetch(`/api/resumes/${id}`, token, {
             method: "PATCH",
             body: JSON.stringify({ content: updatedContent }),
         });
         setSaving(false);
+    }
+
+    async function handleGenerateSummary() {
+        // Check karo ki user ne pehle Job Title jaisi info di hai ya nahi
+        if (experience.length === 0) {
+            alert("Please add at least one work experience first, so AI has context to generate a summary.");
+            return;
+        }
+
+        setGeneratingSummary(true);
+        const token = await getToken();
+
+        try {
+            const data = await apiFetch("/api/ai/generate-summary", token, {
+                method: "POST",
+                body: JSON.stringify({
+                    jobTitle: experience[0].role || "Professional",
+                    yearsOfExperience: experience.length,
+                    keySkills: skills,
+                }),
+            });
+            setSummary(data.summary);
+        } catch (err) {
+            alert("Failed to generate summary. Please try again.");
+        } finally {
+            setGeneratingSummary(false);
+        }
     }
 
     if (loading) return <div className="p-8">Loading...</div>;
@@ -230,6 +261,25 @@ export default function ResumeBuilderPage() {
                     />
                 </div>
 
+            </div>
+
+            <div className="space-y-4 border rounded p-6 mt-6">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-semibold">Professional Summary</h2>
+                    <button
+                        onClick={handleGenerateSummary}
+                        disabled={generatingSummary}
+                        className="text-sm bg-purple-600 text-white px-3 py-1.5 rounded hover:bg-purple-700 disabled:opacity-50"
+                    >
+                        {generatingSummary ? "Generating..." : "✨ Generate with AI"}
+                    </button>
+                </div>
+                <textarea
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
+                    className="w-full border rounded px-3 py-2 h-28"
+                    placeholder="A brief 2-3 sentence summary highlighting your key strengths and career goals..."
+                />
             </div>
 
             <div className="space-y-4 border rounded p-6 mt-6">
