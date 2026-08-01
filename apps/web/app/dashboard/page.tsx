@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
@@ -61,9 +62,10 @@ export default function DashboardPage() {
             ) : (
                 <div className="space-y-3">
                     {resumes.map((resume) => (
-                        <div
+                        <Link
+                            href={`/resumes/${resume.id}`}
                             key={resume.id}
-                            className="border rounded p-4 flex justify-between items-center"
+                            className="border rounded p-4 flex justify-between items-center hover:bg-gray-50 transition"
                         >
                             <div>
                                 <p className="font-medium">{resume.title}</p>
@@ -71,7 +73,7 @@ export default function DashboardPage() {
                                     Last updated: {new Date(resume.updatedAt).toLocaleString()}
                                 </p>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             )}
