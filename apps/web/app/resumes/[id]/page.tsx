@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import ResumeTemplate from "@/components/ResumeTemplate";
 
 interface PersonalInfo {
     fullName?: string;
@@ -200,7 +201,9 @@ export default function ResumeBuilderPage() {
     if (loading) return <div className="p-8">Loading...</div>;
 
     return (
-        <div className="p-8 max-w-2xl mx-auto">
+        <div className="flex gap-6 p-8">
+            {/* Left Side: Form */}
+            <div className="w-1/2">
             <h1 className="text-2xl font-bold mb-6">{resume?.title}</h1>
 
             <div className="space-y-4 border rounded p-6">
@@ -495,5 +498,19 @@ export default function ResumeBuilderPage() {
                 {saving ? "Saving..." : "Save"}
             </button>
         </div>
+            
+            {/* Right Side: Live Preview */ }
+    <div className="w-1/2 overflow-auto max-h-screen sticky top-8">
+        <div className="scale-[0.7] origin-top">
+            <ResumeTemplate
+                personalInfo={personalInfo}
+                summary={summary}
+                experience={experience}
+                education={education}
+                skills={skills}
+            />
+        </div>
+    </div>
+        </div >
     );
 }
