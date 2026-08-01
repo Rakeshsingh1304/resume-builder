@@ -45,11 +45,12 @@ export class WebhooksController {
         // Handle the event
         if (event.type === 'user.created') {
             try {
-                const { email_addresses, first_name, last_name } = event.data;
-                console.log('Creating user with data:', { email_addresses, first_name, last_name });
+                const { id, email_addresses, first_name, last_name } = event.data;
+                console.log('Creating user with data:', { id, email_addresses, first_name, last_name });
 
                 const newUser = await this.prisma.user.create({
                     data: {
+                        clerkId: id,
                         email: email_addresses[0]?.email_address ?? '',
                         fullName: `${first_name ?? ''} ${last_name ?? ''}`.trim(),
                         authProvider: 'EMAIL',
