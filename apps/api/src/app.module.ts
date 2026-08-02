@@ -7,6 +7,7 @@ import { WebhooksModule } from './webhooks/webhooks.module';
 import { ResumesModule } from './resumes/resumes.module';
 import { AiModule } from './ai/ai.module';
 import { CoverLettersModule } from './cover-letters/cover-letters.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { CoverLettersModule } from './cover-letters/cover-letters.module';
     ResumesModule,
     AiModule,
     CoverLettersModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
