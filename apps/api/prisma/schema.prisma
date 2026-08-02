@@ -41,6 +41,23 @@ model User {
   deletedAt         DateTime?
 
   resumes           Resume[]
+  aiCreditUsages     AICreditUsage[]
+}
+
+enum AIFeature {
+  SUMMARY_GEN
+  EXPERIENCE_GEN
+  ATS_CHECK
+  COVER_LETTER_GEN
+}
+
+model AICreditUsage {
+  id          String    @id @default(uuid())
+  userId      String
+  featureUsed AIFeature
+  createdAt   DateTime  @default(now())
+
+  user        User      @relation(fields: [userId], references: [id])
 }
 
 model Resume {

@@ -191,8 +191,8 @@ export default function ResumeBuilderPage() {
                 }),
             });
             setSummary(data.summary);
-        } catch (err) {
-            alert("Failed to generate summary. Please try again.");
+        } catch (err: any) {
+            alert(err.message || "Failed to generate summary. Please try again.");
         } finally {
             setGeneratingSummary(false);
         }
