@@ -47,6 +47,13 @@ interface Resume {
     content: ResumeContent;
 }
 
+interface AtsBreakdownItem {
+    category: string;
+    score: number;
+    maxScore: number;
+    feedback: string;
+}
+
 export default function ResumeBuilderPage() {
     const { id } = useParams<{ id: string }>();
     const { getToken } = useAuth();
@@ -58,6 +65,9 @@ export default function ResumeBuilderPage() {
     const [skillInput, setSkillInput] = useState("");
     const [summary, setSummary] = useState("");
     const [generatingSummary, setGeneratingSummary] = useState(false);
+    const [atsScore, setAtsScore] = useState<number | null>(null);
+    const [atsBreakdown, setAtsBreakdown] = useState<AtsBreakdownItem[]>([]);
+    const [checkingAts, setCheckingAts] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
@@ -198,6 +208,29 @@ export default function ResumeBuilderPage() {
         }
     }
 
+    async function handleCheckAtsScore() {
+        setCheckingAts(true);
+        const token = await getToken();
+        try {
+            // Pehle latest data save karo, phir score check karo (taaki fresh data pe check ho)
+            const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary };
+            await apiFetch(`/api/resumes/${id}`, token, {
+                method: "PATCH",
+                body: JSON.stringify({ content: updatedContent }),
+            });
+
+            const data = await apiFetch(`/api/resumes/${id}/ats-score`, token, {
+                method: "POST",
+            });
+            setAtsScore(data.score);
+            setAtsBreakdown(data.breakdown);
+        } catch (err: any) {
+            alert(err.message || "Failed to check ATS score.");
+        } finally {
+            setCheckingAts(false);
+        }
+    }
+
     if (loading) return <div className="p-8">Loading...</div>;
 
     return (
@@ -205,6 +238,42 @@ export default function ResumeBuilderPage() {
             {/* Left Side: Form */}
             <div className="w-1/2">
                 <h1 className="text-2xl font-bold mb-6">{resume?.title}</h1>
+
+                <div className="border rounded p-6 mb-6">
+                    <div className="flex justify-between items-center mb-3">
+                        <h2 className="text-lg font-semibold">ATS Score</h2>
+                        <button
+                            onClick={handleCheckAtsScore}
+                            disabled={checkingAts}
+                            className="text-sm bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 disabled:opacity-50"
+                        >
+                            {checkingAts ? "Checking..." : "🎯 Check ATS Score"}
+                        </button>
+                    </div>
+
+                    {atsScore !== null && (
+                        <div>
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="text-3xl font-bold">{atsScore}/100</div>
+                                <div className="text-sm text-gray-500">
+                                    {atsScore >= 80 ? "Excellent!" : atsScore >= 60 ? "Good, room to improve" : "Needs work"}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                {atsBreakdown.map((item) => (
+                                    <div key={item.category} className="text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="font-medium">{item.category}</span>
+                                            <span className="text-gray-500">{item.score}/{item.maxScore}</span>
+                                        </div>
+                                        <p className="text-gray-500 text-xs">{item.feedback}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
 
                 <div className="space-y-4 border rounded p-6">
                     <h2 className="text-lg font-semibold">Personal Information</h2>

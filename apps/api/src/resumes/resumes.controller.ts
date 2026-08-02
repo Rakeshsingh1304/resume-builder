@@ -43,4 +43,9 @@ export class ResumesController {
     remove(@Req() req: any, @Param('id') id: string) {
         return this.resumesService.remove(req.auth.userId, id);
     }
+
+    @Post(':id/ats-score')
+    calculateAtsScore(@Req() req: any, @Param('id') id: string) {
+        return this.resumesService.calculateAtsScore(req.auth.userId, id);
+    }
 }
