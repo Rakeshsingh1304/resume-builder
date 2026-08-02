@@ -42,6 +42,7 @@ model User {
 
   resumes           Resume[]
   aiCreditUsages     AICreditUsage[]
+  coverLetters       CoverLetter[]
 }
 
 enum AIFeature {
@@ -71,6 +72,19 @@ model Resume {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   deletedAt    DateTime?
+
+  user         User      @relation(fields: [userId], references: [id])
+}
+
+model CoverLetter {
+  id           String    @id @default(uuid())
+  userId       String
+  resumeId     String?
+  jobTitle     String
+  companyName  String
+  content      String    @db.Text
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   user         User      @relation(fields: [userId], references: [id])
 }
