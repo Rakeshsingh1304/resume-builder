@@ -44,6 +44,11 @@ export class ResumesController {
         return this.resumesService.remove(req.auth.userId, id);
     }
 
+    @Post(':id/toggle-public')
+    togglePublic(@Req() req: any, @Param('id') id: string) {
+        return this.resumesService.togglePublic(req.auth.userId, id);
+    }
+
     @Post(':id/ats-score')
     calculateAtsScore(@Req() req: any, @Param('id') id: string) {
         return this.resumesService.calculateAtsScore(req.auth.userId, id);

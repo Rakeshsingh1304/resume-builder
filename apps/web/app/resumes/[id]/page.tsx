@@ -45,6 +45,8 @@ interface Resume {
     id: string;
     title: string;
     content: ResumeContent;
+    isPublic: boolean;
+    publicSlug: string | null;
 }
 
 interface AtsBreakdownItem {
@@ -231,6 +233,20 @@ export default function ResumeBuilderPage() {
         }
     }
 
+    async function handleTogglePublic() {
+        const token = await getToken();
+        const updated = await apiFetch(`/api/resumes/${id}/toggle-public`, token, {
+            method: "POST",
+        });
+        setResume((prev) => (prev ? { ...prev, isPublic: updated.isPublic, publicSlug: updated.publicSlug } : prev));
+    }
+
+    function handleCopyPublicLink() {
+        const url = `${window.location.origin}/r/${resume?.publicSlug}`;
+        navigator.clipboard.writeText(url);
+        alert("Link copied to clipboard!");
+    }
+
     if (loading) return <div className="p-8">Loading...</div>;
 
     return (
@@ -271,6 +287,45 @@ export default function ResumeBuilderPage() {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                    )}
+                </div>
+
+                <div className="border rounded p-6 mb-6">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h2 className="text-lg font-semibold">Public Sharing</h2>
+                            <p className="text-sm text-gray-500">
+                                {resume?.isPublic
+                                    ? "Anyone with the link can view this resume"
+                                    : "This resume is currently private"}
+                            </p>
+                        </div>
+                        <button
+                            onClick={handleTogglePublic}
+                            className={`px-4 py-2 rounded text-sm ${resume?.isPublic
+                                ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                : "bg-black text-white hover:bg-gray-800"
+                                }`}
+                        >
+                            {resume?.isPublic ? "Make Private" : "Make Public"}
+                        </button>
+                    </div>
+
+                    {resume?.isPublic && (
+                        <div className="mt-3 flex items-center gap-2">
+                            <input
+                                type="text"
+                                readOnly
+                                value={`${typeof window !== "undefined" ? window.location.origin : ""}/r/${resume.publicSlug}`}
+                                className="flex-1 border rounded px-3 py-2 text-sm bg-gray-50"
+                            />
+                            <button
+                                onClick={handleCopyPublicLink}
+                                className="bg-white border border-gray-300 px-3 py-2 rounded text-sm hover:bg-gray-50"
+                            >
+                                📋 Copy
+                            </button>
                         </div>
                     )}
                 </div>

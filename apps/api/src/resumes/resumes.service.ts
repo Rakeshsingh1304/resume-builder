@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateResumeDto } from './dto/create-resume.dto';
 import { UpdateResumeDto } from './dto/update-resume.dto';
@@ -155,5 +155,46 @@ export class ResumesService {
         });
 
         return { score: totalScore, breakdown };
+    }
+
+    async togglePublic(clerkId: string, id: string) {
+        const resume = await this.findOne(clerkId, id);
+
+        if (resume.isPublic) {
+            // Public se private karna — slug hata dete hain
+            return this.prisma.resume.update({
+                where: { id },
+                data: { isPublic: false },
+            });
+        } else {
+            // Private se public karna — ek unique slug generate karo (agar already nahi hai)
+            const slug = resume.publicSlug || `${this.slugify(resume.title)}-${Math.random().toString(36).substring(2, 8)}`;
+            return this.prisma.resume.update({
+                where: { id },
+                data: { isPublic: true, publicSlug: slug },
+            });
+        }
+    }
+
+    private slugify(text: string): string {
+        return text
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '') || 'resume';
+    }
+
+    async findByPublicSlug(slug: string) {
+        const resume = await this.prisma.resume.findFirst({
+            where: { publicSlug: slug, isPublic: true, deletedAt: null },
+        });
+        if (!resume) throw new NotFoundException('Resume not found or is not public');
+
+        // Analytics ke liye view count badhao (Step 4 me plan kiya tha)
+        await this.prisma.resume.update({
+            where: { id: resume.id },
+            data: {}, // Abhi ke liye simple rakhte hain, analytics table baad me
+        });
+
+        return resume;
     }
 }
