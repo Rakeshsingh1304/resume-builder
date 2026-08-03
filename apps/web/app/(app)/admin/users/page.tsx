@@ -40,52 +40,56 @@ export default function AdminUsersPage() {
         await loadUsers();
     }
 
-    if (loading) return <div className="p-8">Loading...</div>;
+    if (loading) return <div className="p-10 text-muted-foreground">Loading...</div>;
 
     return (
-        <div className="p-8 max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Manage Users</h1>
+        <div className="p-10 max-w-4xl mx-auto">
+            <h1 className="font-heading text-2xl font-bold text-foreground mb-6">Manage Users</h1>
 
-            <table className="w-full border-collapse">
-                <thead>
-                    <tr className="border-b text-left text-sm text-gray-500">
-                        <th className="pb-2">Name</th>
-                        <th className="pb-2">Email</th>
-                        <th className="pb-2">Role</th>
-                        <th className="pb-2">Plan</th>
-                        <th className="pb-2">Joined</th>
-                        <th className="pb-2">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {users.map((user) => (
-                        <tr key={user.id} className="border-b text-sm">
-                            <td className="py-2">{user.fullName}</td>
-                            <td className="py-2">{user.email}</td>
-                            <td className="py-2">{user.role}</td>
-                            <td className="py-2">
-                                <span
-                                    className={`px-2 py-0.5 rounded text-xs ${user.subscriptionTier === "PRO"
-                                            ? "bg-purple-100 text-purple-700"
-                                            : "bg-gray-100 text-gray-700"
-                                        }`}
-                                >
-                                    {user.subscriptionTier}
-                                </span>
-                            </td>
-                            <td className="py-2">{new Date(user.createdAt).toLocaleDateString()}</td>
-                            <td className="py-2">
-                                <button
-                                    onClick={() => handleToggleTier(user.id, user.subscriptionTier)}
-                                    className="text-blue-600 hover:underline text-xs"
-                                >
-                                    {user.subscriptionTier === "PRO" ? "Downgrade to Free" : "Upgrade to Pro"}
-                                </button>
-                            </td>
+            <div className="border border-border bg-card rounded-lg overflow-hidden">
+                <table className="w-full border-collapse">
+                    <thead>
+                        <tr className="border-b border-border text-left text-sm text-muted-foreground bg-muted/50">
+                            <th className="p-3 font-medium">Name</th>
+                            <th className="p-3 font-medium">Email</th>
+                            <th className="p-3 font-medium">Role</th>
+                            <th className="p-3 font-medium">Plan</th>
+                            <th className="p-3 font-medium">Joined</th>
+                            <th className="p-3 font-medium">Action</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {users.map((user) => (
+                            <tr key={user.id} className="border-b border-border last:border-0 text-sm">
+                                <td className="p-3 text-foreground">{user.fullName}</td>
+                                <td className="p-3 text-foreground">{user.email}</td>
+                                <td className="p-3 text-foreground">{user.role}</td>
+                                <td className="p-3">
+                                    <span
+                                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.subscriptionTier === "PRO"
+                                                ? "bg-primary/15 text-primary"
+                                                : "bg-muted text-muted-foreground"
+                                            }`}
+                                    >
+                                        {user.subscriptionTier}
+                                    </span>
+                                </td>
+                                <td className="p-3 text-muted-foreground">
+                                    {new Date(user.createdAt).toLocaleDateString()}
+                                </td>
+                                <td className="p-3">
+                                    <button
+                                        onClick={() => handleToggleTier(user.id, user.subscriptionTier)}
+                                        className="text-primary hover:underline text-xs font-medium"
+                                    >
+                                        {user.subscriptionTier === "PRO" ? "Downgrade to Free" : "Upgrade to Pro"}
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

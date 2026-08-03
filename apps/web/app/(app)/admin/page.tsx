@@ -31,37 +31,34 @@ export default function AdminOverviewPage() {
     }, []);
 
     if (error) {
-        return <div className="p-8 text-red-600">{error}</div>;
+        return <div className="p-10 text-destructive">{error}</div>;
     }
 
-    if (!overview) return <div className="p-8">Loading...</div>;
+    if (!overview) return <div className="p-10 text-muted-foreground">Loading...</div>;
+
+    const stats = [
+        { label: "Total Users", value: overview.totalUsers },
+        { label: "Pro Users", value: overview.proUsers },
+        { label: "Total Resumes", value: overview.totalResumes },
+        { label: "Cover Letters", value: overview.totalCoverLetters },
+    ];
 
     return (
-        <div className="p-8 max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-                <Link href="/admin/users" className="text-sm text-blue-600 hover:underline">
+        <div className="p-10 max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="font-heading text-3xl font-bold text-foreground">Admin Dashboard</h1>
+                <Link href="/admin/users" className="text-sm text-primary hover:underline font-medium">
                     Manage Users →
                 </Link>
             </div>
 
             <div className="grid grid-cols-4 gap-4">
-                <div className="border rounded p-4">
-                    <p className="text-sm text-gray-500">Total Users</p>
-                    <p className="text-2xl font-bold">{overview.totalUsers}</p>
-                </div>
-                <div className="border rounded p-4">
-                    <p className="text-sm text-gray-500">Pro Users</p>
-                    <p className="text-2xl font-bold">{overview.proUsers}</p>
-                </div>
-                <div className="border rounded p-4">
-                    <p className="text-sm text-gray-500">Total Resumes</p>
-                    <p className="text-2xl font-bold">{overview.totalResumes}</p>
-                </div>
-                <div className="border rounded p-4">
-                    <p className="text-sm text-gray-500">Cover Letters</p>
-                    <p className="text-2xl font-bold">{overview.totalCoverLetters}</p>
-                </div>
+                {stats.map((stat) => (
+                    <div key={stat.label} className="border border-border bg-card rounded-lg p-5">
+                        <p className="text-sm text-muted-foreground">{stat.label}</p>
+                        <p className="font-heading text-3xl font-bold text-foreground mt-1">{stat.value}</p>
+                    </div>
+                ))}
             </div>
         </div>
     );
