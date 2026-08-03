@@ -1,14 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { apiFetch } from "@/lib/api";
 
 interface Resume {
     id: string;
     title: string;
     updatedAt: string;
+    atsScore: number | null;
 }
 
 export default function DashboardPage() {
@@ -41,38 +42,51 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="p-8 max-w-3xl mx-auto">
-            <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold">My Resumes</h1>
+        <div className="p-10 max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h1 className="font-heading text-3xl font-bold text-foreground">My Resumes</h1>
+                    <p className="text-muted-foreground text-sm mt-1">
+                        Build, refine, and share your professional story.
+                    </p>
+                </div>
                 <button
                     onClick={handleCreateResume}
                     disabled={creating}
-                    className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
+                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
                 >
                     {creating ? "Creating..." : "+ New Resume"}
                 </button>
             </div>
 
             {loading ? (
-                <p>Loading...</p>
+                <p className="text-muted-foreground text-sm">Loading...</p>
             ) : resumes.length === 0 ? (
-                <p className="text-gray-500">
-                    No resumes yet. Click "New Resume" to create your first one.
-                </p>
+                <div className="border border-dashed border-border rounded-lg p-10 text-center">
+                    <p className="text-muted-foreground text-sm">
+                        No resumes yet. Click "New Resume" to create your first one.
+                    </p>
+                </div>
             ) : (
                 <div className="space-y-3">
                     {resumes.map((resume) => (
                         <Link
                             href={`/resumes/${resume.id}`}
                             key={resume.id}
-                            className="border rounded p-4 flex justify-between items-center hover:bg-gray-50 transition"
+                            className="border border-border bg-card rounded-lg p-5 flex justify-between items-center hover:border-primary/50 transition"
                         >
                             <div>
-                                <p className="font-medium">{resume.title}</p>
-                                <p className="text-sm text-gray-500">
-                                    Last updated: {new Date(resume.updatedAt).toLocaleString()}
+                                <p className="font-heading font-semibold text-foreground">{resume.title}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Last updated: {new Date(resume.updatedAt).toLocaleDateString()}
                                 </p>
                             </div>
+                            {resume.atsScore !== null && (
+                                <div className="text-right">
+                                    <p className="text-xs text-muted-foreground">ATS Score</p>
+                                    <p className="font-heading font-bold text-primary">{resume.atsScore}/100</p>
+                                </div>
+                            )}
                         </Link>
                     ))}
                 </div>
