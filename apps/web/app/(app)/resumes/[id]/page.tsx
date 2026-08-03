@@ -66,12 +66,12 @@ export default function ResumeBuilderPage() {
     const [skills, setSkills] = useState<string[]>([]);
     const [skillInput, setSkillInput] = useState("");
     const [summary, setSummary] = useState("");
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [generatingSummary, setGeneratingSummary] = useState(false);
     const [atsScore, setAtsScore] = useState<number | null>(null);
     const [atsBreakdown, setAtsBreakdown] = useState<AtsBreakdownItem[]>([]);
     const [checkingAts, setCheckingAts] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         async function load() {
@@ -107,15 +107,9 @@ export default function ResumeBuilderPage() {
         ]);
     }
 
-    function updateExperience(
-        entryId: string,
-        field: keyof ExperienceEntry,
-        value: string | boolean
-    ) {
+    function updateExperience(entryId: string, field: keyof ExperienceEntry, value: string | boolean) {
         setExperience((prev) =>
-            prev.map((entry) =>
-                entry.id === entryId ? { ...entry, [field]: value } : entry
-            )
+            prev.map((entry) => (entry.id === entryId ? { ...entry, [field]: value } : entry))
         );
     }
 
@@ -126,26 +120,13 @@ export default function ResumeBuilderPage() {
     function addEducation() {
         setEducation((prev) => [
             ...prev,
-            {
-                id: crypto.randomUUID(),
-                institution: "",
-                degree: "",
-                fieldOfStudy: "",
-                startDate: "",
-                endDate: "",
-            },
+            { id: crypto.randomUUID(), institution: "", degree: "", fieldOfStudy: "", startDate: "", endDate: "" },
         ]);
     }
 
-    function updateEducation(
-        entryId: string,
-        field: keyof EducationEntry,
-        value: string
-    ) {
+    function updateEducation(entryId: string, field: keyof EducationEntry, value: string) {
         setEducation((prev) =>
-            prev.map((entry) =>
-                entry.id === entryId ? { ...entry, [field]: value } : entry
-            )
+            prev.map((entry) => (entry.id === entryId ? { ...entry, [field]: value } : entry))
         );
     }
 
@@ -184,15 +165,12 @@ export default function ResumeBuilderPage() {
     }
 
     async function handleGenerateSummary() {
-        // Check karo ki user ne pehle Job Title jaisi info di hai ya nahi
         if (experience.length === 0) {
             alert("Please add at least one work experience first, so AI has context to generate a summary.");
             return;
         }
-
         setGeneratingSummary(true);
         const token = await getToken();
-
         try {
             const data = await apiFetch("/api/ai/generate-summary", token, {
                 method: "POST",
@@ -214,16 +192,12 @@ export default function ResumeBuilderPage() {
         setCheckingAts(true);
         const token = await getToken();
         try {
-            // Pehle latest data save karo, phir score check karo (taaki fresh data pe check ho)
             const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary };
             await apiFetch(`/api/resumes/${id}`, token, {
                 method: "PATCH",
                 body: JSON.stringify({ content: updatedContent }),
             });
-
-            const data = await apiFetch(`/api/resumes/${id}/ats-score`, token, {
-                method: "POST",
-            });
+            const data = await apiFetch(`/api/resumes/${id}/ats-score`, token, { method: "POST" });
             setAtsScore(data.score);
             setAtsBreakdown(data.breakdown);
         } catch (err: any) {
@@ -235,9 +209,7 @@ export default function ResumeBuilderPage() {
 
     async function handleTogglePublic() {
         const token = await getToken();
-        const updated = await apiFetch(`/api/resumes/${id}/toggle-public`, token, {
-            method: "POST",
-        });
+        const updated = await apiFetch(`/api/resumes/${id}/toggle-public`, token, { method: "POST" });
         setResume((prev) => (prev ? { ...prev, isPublic: updated.isPublic, publicSlug: updated.publicSlug } : prev));
     }
 
@@ -247,21 +219,22 @@ export default function ResumeBuilderPage() {
         alert("Link copied to clipboard!");
     }
 
-    if (loading) return <div className="p-8">Loading...</div>;
+    if (loading) return <div className="p-10 text-muted-foreground">Loading...</div>;
 
     return (
         <div className="flex gap-6 p-8">
             {/* Left Side: Form */}
             <div className="w-1/2">
-                <h1 className="text-2xl font-bold mb-6">{resume?.title}</h1>
+                <h1 className="font-heading text-2xl font-bold text-foreground mb-6">{resume?.title}</h1>
 
-                <div className="border rounded p-6 mb-6">
+                {/* ATS Score */}
+                <div className="border border-border bg-card rounded-lg p-6 mb-5">
                     <div className="flex justify-between items-center mb-3">
-                        <h2 className="text-lg font-semibold">ATS Score</h2>
+                        <h2 className="font-heading text-lg font-semibold text-foreground">ATS Score</h2>
                         <button
                             onClick={handleCheckAtsScore}
                             disabled={checkingAts}
-                            className="text-sm bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 disabled:opacity-50"
+                            className="text-sm bg-[#2E7D32] text-white px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50"
                         >
                             {checkingAts ? "Checking..." : "🎯 Check ATS Score"}
                         </button>
@@ -270,20 +243,19 @@ export default function ResumeBuilderPage() {
                     {atsScore !== null && (
                         <div>
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="text-3xl font-bold">{atsScore}/100</div>
-                                <div className="text-sm text-gray-500">
+                                <div className="font-heading text-3xl font-bold text-foreground">{atsScore}/100</div>
+                                <div className="text-sm text-muted-foreground">
                                     {atsScore >= 80 ? "Excellent!" : atsScore >= 60 ? "Good, room to improve" : "Needs work"}
                                 </div>
                             </div>
-
                             <div className="space-y-2">
                                 {atsBreakdown.map((item) => (
                                     <div key={item.category} className="text-sm">
                                         <div className="flex justify-between">
-                                            <span className="font-medium">{item.category}</span>
-                                            <span className="text-gray-500">{item.score}/{item.maxScore}</span>
+                                            <span className="font-medium text-foreground">{item.category}</span>
+                                            <span className="text-muted-foreground">{item.score}/{item.maxScore}</span>
                                         </div>
-                                        <p className="text-gray-500 text-xs">{item.feedback}</p>
+                                        <p className="text-muted-foreground text-xs">{item.feedback}</p>
                                     </div>
                                 ))}
                             </div>
@@ -291,21 +263,20 @@ export default function ResumeBuilderPage() {
                     )}
                 </div>
 
-                <div className="border rounded p-6 mb-6">
+                {/* Public Sharing */}
+                <div className="border border-border bg-card rounded-lg p-6 mb-5">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h2 className="text-lg font-semibold">Public Sharing</h2>
-                            <p className="text-sm text-gray-500">
-                                {resume?.isPublic
-                                    ? "Anyone with the link can view this resume"
-                                    : "This resume is currently private"}
+                            <h2 className="font-heading text-lg font-semibold text-foreground">Public Sharing</h2>
+                            <p className="text-sm text-muted-foreground">
+                                {resume?.isPublic ? "Anyone with the link can view this resume" : "This resume is currently private"}
                             </p>
                         </div>
                         <button
                             onClick={handleTogglePublic}
-                            className={`px-4 py-2 rounded text-sm ${resume?.isPublic
-                                ? "bg-red-100 text-red-700 hover:bg-red-200"
-                                : "bg-black text-white hover:bg-gray-800"
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition ${resume?.isPublic
+                                ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
+                                : "bg-primary text-primary-foreground hover:opacity-90"
                                 }`}
                         >
                             {resume?.isPublic ? "Make Private" : "Make Public"}
@@ -318,11 +289,11 @@ export default function ResumeBuilderPage() {
                                 type="text"
                                 readOnly
                                 value={`${typeof window !== "undefined" ? window.location.origin : ""}/r/${resume.publicSlug}`}
-                                className="flex-1 border rounded px-3 py-2 text-sm bg-gray-50"
+                                className="flex-1 border border-border rounded-md px-3 py-2 text-sm bg-muted"
                             />
                             <button
                                 onClick={handleCopyPublicLink}
-                                className="bg-white border border-gray-300 px-3 py-2 rounded text-sm hover:bg-gray-50"
+                                className="bg-card border border-border px-3 py-2 rounded-md text-sm hover:bg-muted"
                             >
                                 📋 Copy
                             </button>
@@ -330,73 +301,70 @@ export default function ResumeBuilderPage() {
                     )}
                 </div>
 
-                <div className="space-y-4 border rounded p-6">
-                    <h2 className="text-lg font-semibold">Personal Information</h2>
+                {/* Personal Info */}
+                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                    <h2 className="font-heading text-lg font-semibold text-foreground">Personal Information</h2>
 
                     <div>
-                        <label className="block text-sm font-medium mb-1">Full Name</label>
+                        <label className="block text-sm font-medium mb-1 text-foreground">Full Name</label>
                         <input
                             type="text"
                             value={personalInfo.fullName || ""}
                             onChange={(e) => updateField("fullName", e.target.value)}
-                            className="w-full border rounded px-3 py-2"
+                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
                             placeholder="John Doe"
                         />
                     </div>
-
                     <div>
-                        <label className="block text-sm font-medium mb-1">Email</label>
+                        <label className="block text-sm font-medium mb-1 text-foreground">Email</label>
                         <input
                             type="email"
                             value={personalInfo.email || ""}
                             onChange={(e) => updateField("email", e.target.value)}
-                            className="w-full border rounded px-3 py-2"
+                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
                             placeholder="john@example.com"
                         />
                     </div>
-
                     <div>
-                        <label className="block text-sm font-medium mb-1">Phone</label>
+                        <label className="block text-sm font-medium mb-1 text-foreground">Phone</label>
                         <input
                             type="text"
                             value={personalInfo.phone || ""}
                             onChange={(e) => updateField("phone", e.target.value)}
-                            className="w-full border rounded px-3 py-2"
+                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
                             placeholder="+91 98765 43210"
                         />
                     </div>
-
                     <div>
-                        <label className="block text-sm font-medium mb-1">Location</label>
+                        <label className="block text-sm font-medium mb-1 text-foreground">Location</label>
                         <input
                             type="text"
                             value={personalInfo.location || ""}
                             onChange={(e) => updateField("location", e.target.value)}
-                            className="w-full border rounded px-3 py-2"
+                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
                             placeholder="Surat, India"
                         />
                     </div>
-
                     <div>
-                        <label className="block text-sm font-medium mb-1">LinkedIn</label>
+                        <label className="block text-sm font-medium mb-1 text-foreground">LinkedIn</label>
                         <input
                             type="text"
                             value={personalInfo.linkedin || ""}
                             onChange={(e) => updateField("linkedin", e.target.value)}
-                            className="w-full border rounded px-3 py-2"
+                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
                             placeholder="linkedin.com/in/johndoe"
                         />
                     </div>
-
                 </div>
 
-                <div className="space-y-4 border rounded p-6 mt-6">
+                {/* Summary */}
+                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-semibold">Professional Summary</h2>
+                        <h2 className="font-heading text-lg font-semibold text-foreground">Professional Summary</h2>
                         <button
                             onClick={handleGenerateSummary}
                             disabled={generatingSummary}
-                            className="text-sm bg-purple-600 text-white px-3 py-1.5 rounded hover:bg-purple-700 disabled:opacity-50"
+                            className="text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50"
                         >
                             {generatingSummary ? "Generating..." : "✨ Generate with AI"}
                         </button>
@@ -404,75 +372,73 @@ export default function ResumeBuilderPage() {
                     <textarea
                         value={summary}
                         onChange={(e) => setSummary(e.target.value)}
-                        className="w-full border rounded px-3 py-2 h-28"
+                        className="w-full border border-border rounded-md px-3 py-2 h-28 bg-background"
                         placeholder="A brief 2-3 sentence summary highlighting your key strengths and career goals..."
                     />
                 </div>
 
-                <div className="space-y-4 border rounded p-6 mt-6">
+                {/* Experience */}
+                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-semibold">Work Experience</h2>
-                        <button
-                            onClick={addExperience}
-                            className="text-sm text-blue-600 hover:underline"
-                        >
+                        <h2 className="font-heading text-lg font-semibold text-foreground">Work Experience</h2>
+                        <button onClick={addExperience} className="text-sm text-primary hover:underline font-medium">
                             + Add Experience
                         </button>
                     </div>
 
                     {experience.length === 0 && (
-                        <p className="text-gray-500 text-sm">No experience added yet.</p>
+                        <p className="text-muted-foreground text-sm">No experience added yet.</p>
                     )}
 
                     {experience.map((entry) => (
-                        <div key={entry.id} className="border rounded p-4 space-y-3 relative">
+                        <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
                             <button
                                 onClick={() => removeExperience(entry.id)}
-                                className="absolute top-3 right-3 text-red-500 text-sm hover:underline"
+                                className="absolute top-3 right-3 text-destructive text-sm hover:underline"
                             >
                                 Remove
                             </button>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1">Company</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Company</label>
                                 <input
                                     type="text"
                                     value={entry.company || ""}
                                     onChange={(e) => updateExperience(entry.id, "company", e.target.value)}
-                                    className="w-full border rounded px-3 py-2"
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
                                     placeholder="Google"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1">Job Title</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Job Title</label>
                                 <input
                                     type="text"
                                     value={entry.role || ""}
                                     onChange={(e) => updateExperience(entry.id, "role", e.target.value)}
-                                    className="w-full border rounded px-3 py-2"
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
                                     placeholder="Software Engineer"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Start Date</label>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Start Date</label>
                                     <input
                                         type="month"
                                         value={entry.startDate || ""}
                                         onChange={(e) => updateExperience(entry.id, "startDate", e.target.value)}
-                                        className="w-full border rounded px-3 py-2"
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">End Date</label>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">End Date</label>
                                     <input
                                         type="month"
                                         value={entry.endDate || ""}
                                         disabled={entry.currentlyWorking}
                                         onChange={(e) => updateExperience(entry.id, "endDate", e.target.value)}
-                                        className="w-full border rounded px-3 py-2 disabled:bg-gray-100"
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card disabled:bg-muted"
                                     />
                                 </div>
                             </div>
@@ -481,19 +447,17 @@ export default function ResumeBuilderPage() {
                                 <input
                                     type="checkbox"
                                     checked={entry.currentlyWorking || false}
-                                    onChange={(e) =>
-                                        updateExperience(entry.id, "currentlyWorking", e.target.checked)
-                                    }
+                                    onChange={(e) => updateExperience(entry.id, "currentlyWorking", e.target.checked)}
                                 />
-                                <label className="text-sm">I currently work here</label>
+                                <label className="text-sm text-foreground">I currently work here</label>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1">Description</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Description</label>
                                 <textarea
                                     value={entry.description || ""}
                                     onChange={(e) => updateExperience(entry.id, "description", e.target.value)}
-                                    className="w-full border rounded px-3 py-2 h-24"
+                                    className="w-full border border-border rounded-md px-3 py-2 h-24 bg-card"
                                     placeholder="Describe your responsibilities and achievements..."
                                 />
                             </div>
@@ -501,80 +465,78 @@ export default function ResumeBuilderPage() {
                     ))}
                 </div>
 
-                <div className="space-y-4 border rounded p-6 mt-6">
+                {/* Education */}
+                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                     <div className="flex justify-between items-center">
-                        <h2 className="text-lg font-semibold">Education</h2>
-                        <button
-                            onClick={addEducation}
-                            className="text-sm text-blue-600 hover:underline"
-                        >
+                        <h2 className="font-heading text-lg font-semibold text-foreground">Education</h2>
+                        <button onClick={addEducation} className="text-sm text-primary hover:underline font-medium">
                             + Add Education
                         </button>
                     </div>
 
                     {education.length === 0 && (
-                        <p className="text-gray-500 text-sm">No education added yet.</p>
+                        <p className="text-muted-foreground text-sm">No education added yet.</p>
                     )}
 
                     {education.map((entry) => (
-                        <div key={entry.id} className="border rounded p-4 space-y-3 relative">
+                        <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
                             <button
                                 onClick={() => removeEducation(entry.id)}
-                                className="absolute top-3 right-3 text-red-500 text-sm hover:underline"
+                                className="absolute top-3 right-3 text-destructive text-sm hover:underline"
                             >
                                 Remove
                             </button>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1">Institution</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Institution</label>
                                 <input
                                     type="text"
                                     value={entry.institution || ""}
                                     onChange={(e) => updateEducation(entry.id, "institution", e.target.value)}
-                                    className="w-full border rounded px-3 py-2"
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
                                     placeholder="Stanford University"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1">Degree</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Degree</label>
                                 <input
                                     type="text"
                                     value={entry.degree || ""}
                                     onChange={(e) => updateEducation(entry.id, "degree", e.target.value)}
-                                    className="w-full border rounded px-3 py-2"
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
                                     placeholder="Bachelor of Technology"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1">Field of Study</label>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Field of Study</label>
                                 <input
                                     type="text"
                                     value={entry.fieldOfStudy || ""}
                                     onChange={(e) => updateEducation(entry.id, "fieldOfStudy", e.target.value)}
-                                    className="w-full border rounded px-3 py-2"
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
                                     placeholder="Computer Science"
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">Start Date</label>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Start Date</label>
                                     <input
                                         type="month"
                                         value={entry.startDate || ""}
                                         onChange={(e) => updateEducation(entry.id, "startDate", e.target.value)}
-                                        className="w-full border rounded px-3 py-2"
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-1">End Date</label>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">End Date</label>
                                     <input
                                         type="month"
                                         value={entry.endDate || ""}
                                         onChange={(e) => updateEducation(entry.id, "endDate", e.target.value)}
-                                        className="w-full border rounded px-3 py-2"
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
                                     />
                                 </div>
                             </div>
@@ -582,31 +544,27 @@ export default function ResumeBuilderPage() {
                     ))}
                 </div>
 
-                <div className="space-y-4 border rounded p-6 mt-6">
-                    <h2 className="text-lg font-semibold">Skills</h2>
+                {/* Skills */}
+                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                    <h2 className="font-heading text-lg font-semibold text-foreground">Skills</h2>
 
-                    <div>
-                        <input
-                            type="text"
-                            value={skillInput}
-                            onChange={(e) => setSkillInput(e.target.value)}
-                            onKeyDown={handleSkillKeyDown}
-                            className="w-full border rounded px-3 py-2"
-                            placeholder="Type a skill and press Enter (e.g. React)"
-                        />
-                    </div>
+                    <input
+                        type="text"
+                        value={skillInput}
+                        onChange={(e) => setSkillInput(e.target.value)}
+                        onKeyDown={handleSkillKeyDown}
+                        className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                        placeholder="Type a skill and press Enter (e.g. React)"
+                    />
 
                     <div className="flex flex-wrap gap-2">
                         {skills.map((skill) => (
                             <span
                                 key={skill}
-                                className="bg-gray-100 border rounded-full px-3 py-1 text-sm flex items-center gap-2"
+                                className="bg-muted border border-border rounded-full px-3 py-1 text-sm flex items-center gap-2 text-foreground"
                             >
                                 {skill}
-                                <button
-                                    onClick={() => removeSkill(skill)}
-                                    className="text-red-500 hover:text-red-700"
-                                >
+                                <button onClick={() => removeSkill(skill)} className="text-destructive hover:opacity-70">
                                     ×
                                 </button>
                             </span>
@@ -614,18 +572,17 @@ export default function ResumeBuilderPage() {
                     </div>
                 </div>
 
-                <div className="flex gap-3 mt-6">
+                <div className="flex gap-3">
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
+                        className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50"
                     >
                         {saving ? "Saving..." : "Save"}
                     </button>
-
                     <button
                         onClick={() => window.open(`/resumes/${id}/print`, "_blank")}
-                        className="bg-white border border-gray-300 px-4 py-2 rounded hover:bg-gray-50"
+                        className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:bg-muted"
                     >
                         📄 Download PDF
                     </button>
@@ -644,6 +601,6 @@ export default function ResumeBuilderPage() {
                     />
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
