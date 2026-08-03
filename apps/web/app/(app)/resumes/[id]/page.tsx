@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import ResumeTemplate from "@/components/ResumeTemplate";
+import ScaledResumePreview from "@/components/ScaledResumePreview";
 
 interface PersonalInfo {
     fullName?: string;
@@ -222,9 +223,9 @@ export default function ResumeBuilderPage() {
     if (loading) return <div className="p-10 text-muted-foreground">Loading...</div>;
 
     return (
-        <div className="flex gap-6 p-8">
+        <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-8">
             {/* Left Side: Form */}
-            <div className="w-1/2">
+            <div className="w-full lg:w-1/2">
                 <h1 className="font-heading text-2xl font-bold text-foreground mb-6">{resume?.title}</h1>
 
                 {/* ATS Score */}
@@ -421,7 +422,7 @@ export default function ResumeBuilderPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-foreground">Start Date</label>
                                     <input
@@ -590,16 +591,14 @@ export default function ResumeBuilderPage() {
             </div>
 
             {/* Right Side: Live Preview */}
-            <div className="w-1/2 overflow-auto max-h-screen sticky top-8">
-                <div className="scale-[0.7] origin-top">
-                    <ResumeTemplate
-                        personalInfo={personalInfo}
-                        summary={summary}
-                        experience={experience}
-                        education={education}
-                        skills={skills}
-                    />
-                </div>
+            <div className="w-full lg:w-1/2 lg:sticky lg:top-8 lg:self-start max-w-[556px] mx-auto lg:mx-0">
+                <ScaledResumePreview
+                    personalInfo={personalInfo}
+                    summary={summary}
+                    experience={experience}
+                    education={education}
+                    skills={skills}
+                />
             </div>
         </div>
     );

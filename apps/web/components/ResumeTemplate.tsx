@@ -48,7 +48,7 @@ export default function ResumeTemplate({
     skills,
 }: ResumeTemplateProps) {
     return (
-        <div className="bg-white text-black p-10 shadow-lg" style={{ width: "210mm", minHeight: "297mm" }}>
+        <div className="bg-white text-black p-10 shadow-lg" style={{ width: "794px", minHeight: "1123px" }}>
             {/* Header */}
             <div className="border-b-2 border-gray-800 pb-4 mb-4">
                 <h1 className="text-3xl font-bold">{personalInfo.fullName || "Your Name"}</h1>

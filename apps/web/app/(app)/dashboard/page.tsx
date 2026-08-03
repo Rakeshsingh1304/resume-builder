@@ -42,8 +42,8 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="p-10 max-w-3xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
+        <div className="p-4 md:p-10 max-w-3xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
                 <div>
                     <h1 className="font-heading text-3xl font-bold text-foreground">My Resumes</h1>
                     <p className="text-muted-foreground text-sm mt-1">
@@ -53,7 +53,7 @@ export default function DashboardPage() {
                 <button
                     onClick={handleCreateResume}
                     disabled={creating}
-                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 transition disabled:opacity-50"
+                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 transition disabled:opacity-50 w-full sm:w-auto"
                 >
                     {creating ? "Creating..." : "+ New Resume"}
                 </button>
@@ -73,7 +73,7 @@ export default function DashboardPage() {
                         <Link
                             href={`/resumes/${resume.id}`}
                             key={resume.id}
-                            className="border border-border bg-card rounded-lg p-5 flex justify-between items-center hover:border-primary/50 transition"
+                            className="border border-border bg-card rounded-lg p-5 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 hover:border-primary/50 transition"
                         >
                             <div>
                                 <p className="font-heading font-semibold text-foreground">{resume.title}</p>
