@@ -230,12 +230,12 @@ export default function ResumeBuilderPage() {
 
                 {/* ATS Score */}
                 <div className="border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex justify-between items-center mb-3">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
                         <h2 className="font-heading text-lg font-semibold text-foreground">ATS Score</h2>
                         <button
                             onClick={handleCheckAtsScore}
                             disabled={checkingAts}
-                            className="text-sm bg-[#2E7D32] text-white px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50"
+                            className="text-sm bg-[#2E7D32] text-white px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 whitespace-nowrap w-full sm:w-auto"
                         >
                             {checkingAts ? "Checking..." : "🎯 Check ATS Score"}
                         </button>
@@ -266,7 +266,7 @@ export default function ResumeBuilderPage() {
 
                 {/* Public Sharing */}
                 <div className="border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                         <div>
                             <h2 className="font-heading text-lg font-semibold text-foreground">Public Sharing</h2>
                             <p className="text-sm text-muted-foreground">
@@ -275,7 +275,7 @@ export default function ResumeBuilderPage() {
                         </div>
                         <button
                             onClick={handleTogglePublic}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition ${resume?.isPublic
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition whitespace-nowrap w-full sm:w-auto ${resume?.isPublic
                                 ? "bg-destructive/10 text-destructive hover:bg-destructive/20"
                                 : "bg-primary text-primary-foreground hover:opacity-90"
                                 }`}
@@ -285,16 +285,16 @@ export default function ResumeBuilderPage() {
                     </div>
 
                     {resume?.isPublic && (
-                        <div className="mt-3 flex items-center gap-2">
+                        <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                             <input
                                 type="text"
                                 readOnly
                                 value={`${typeof window !== "undefined" ? window.location.origin : ""}/r/${resume.publicSlug}`}
-                                className="flex-1 border border-border rounded-md px-3 py-2 text-sm bg-muted"
+                                className="flex-1 border border-border rounded-md px-3 py-2 text-sm bg-muted min-w-0"
                             />
                             <button
                                 onClick={handleCopyPublicLink}
-                                className="bg-card border border-border px-3 py-2 rounded-md text-sm hover:bg-muted"
+                                className="bg-card border border-border px-3 py-2 rounded-md text-sm hover:bg-muted whitespace-nowrap"
                             >
                                 📋 Copy
                             </button>
@@ -360,12 +360,12 @@ export default function ResumeBuilderPage() {
 
                 {/* Summary */}
                 <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                         <h2 className="font-heading text-lg font-semibold text-foreground">Professional Summary</h2>
                         <button
                             onClick={handleGenerateSummary}
                             disabled={generatingSummary}
-                            className="text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50"
+                            className="text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 whitespace-nowrap w-full sm:w-auto"
                         >
                             {generatingSummary ? "Generating..." : "✨ Generate with AI"}
                         </button>
@@ -380,9 +380,9 @@ export default function ResumeBuilderPage() {
 
                 {/* Experience */}
                 <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center gap-2">
                         <h2 className="font-heading text-lg font-semibold text-foreground">Work Experience</h2>
-                        <button onClick={addExperience} className="text-sm text-primary hover:underline font-medium">
+                        <button onClick={addExperience} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
                             + Add Experience
                         </button>
                     </div>
@@ -468,9 +468,9 @@ export default function ResumeBuilderPage() {
 
                 {/* Education */}
                 <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center gap-2">
                         <h2 className="font-heading text-lg font-semibold text-foreground">Education</h2>
-                        <button onClick={addEducation} className="text-sm text-primary hover:underline font-medium">
+                        <button onClick={addEducation} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
                             + Add Education
                         </button>
                     </div>
@@ -573,17 +573,17 @@ export default function ResumeBuilderPage() {
                     </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                        className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
                     >
                         {saving ? "Saving..." : "Save"}
                     </button>
                     <button
                         onClick={() => window.open(`/resumes/${id}/print`, "_blank")}
-                        className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:bg-muted"
+                        className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:bg-muted whitespace-nowrap"
                     >
                         📄 Download PDF
                     </button>

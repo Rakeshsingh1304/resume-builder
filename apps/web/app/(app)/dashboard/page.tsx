@@ -53,7 +53,7 @@ export default function DashboardPage() {
                 <button
                     onClick={handleCreateResume}
                     disabled={creating}
-                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 transition disabled:opacity-50 w-full sm:w-auto"
+                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 transition disabled:opacity-50 w-full sm:w-auto whitespace-nowrap"
                 >
                     {creating ? "Creating..." : "+ New Resume"}
                 </button>

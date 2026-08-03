@@ -46,8 +46,8 @@ export default function AdminUsersPage() {
         <div className="p-10 max-w-4xl mx-auto">
             <h1 className="font-heading text-2xl font-bold text-foreground mb-6">Manage Users</h1>
 
-            <div className="border border-border bg-card rounded-lg overflow-hidden">
-                <table className="w-full border-collapse">
+            <div className="border border-border bg-card rounded-lg overflow-x-auto">
+                <table className="w-full border-collapse min-w-[600px]">
                     <thead>
                         <tr className="border-b border-border text-left text-sm text-muted-foreground bg-muted/50">
                             <th className="p-3 font-medium">Name</th>
@@ -67,8 +67,8 @@ export default function AdminUsersPage() {
                                 <td className="p-3">
                                     <span
                                         className={`px-2 py-0.5 rounded-full text-xs font-medium ${user.subscriptionTier === "PRO"
-                                                ? "bg-primary/15 text-primary"
-                                                : "bg-muted text-muted-foreground"
+                                            ? "bg-primary/15 text-primary"
+                                            : "bg-muted text-muted-foreground"
                                             }`}
                                     >
                                         {user.subscriptionTier}

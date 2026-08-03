@@ -58,14 +58,14 @@ export default function CoverLettersPage() {
 
     return (
         <div className="p-10 max-w-3xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
                 <div>
                     <h1 className="font-heading text-3xl font-bold text-foreground">Cover Letters</h1>
                     <p className="text-muted-foreground text-sm mt-1">Tailored letters, generated in seconds.</p>
                 </div>
                 <button
                     onClick={() => setShowForm(!showForm)}
-                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90"
+                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 w-full sm:w-auto whitespace-nowrap"
                 >
                     + New Cover Letter
                 </button>
