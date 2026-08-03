@@ -41,32 +41,32 @@ export default function CoverLetterDetailPage() {
         alert("Copied to clipboard!");
     }
 
-    if (loading) return <div className="p-8">Loading...</div>;
+    if (loading) return <div className="p-10 text-muted-foreground">Loading...</div>;
 
     return (
-        <div className="p-8 max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-1">
+        <div className="p-10 max-w-2xl mx-auto">
+            <h1 className="font-heading text-2xl font-bold text-foreground mb-1">
                 {jobTitle} at {companyName}
             </h1>
-            <p className="text-gray-500 text-sm mb-6">Edit your cover letter below</p>
+            <p className="text-muted-foreground text-sm mb-6">Edit your cover letter below</p>
 
             <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="w-full border rounded px-4 py-3 h-96 font-serif"
+                className="w-full border border-border rounded-lg px-4 py-3 h-96 font-serif bg-card"
             />
 
             <div className="flex gap-3 mt-4">
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="bg-black text-white px-4 py-2 rounded disabled:opacity-50"
+                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 disabled:opacity-50"
                 >
                     {saving ? "Saving..." : "Save"}
                 </button>
                 <button
                     onClick={handleCopy}
-                    className="bg-white border border-gray-300 px-4 py-2 rounded hover:bg-gray-50"
+                    className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:bg-muted"
                 >
                     📋 Copy to Clipboard
                 </button>
