@@ -40,6 +40,7 @@ export default function PrintResumePage() {
             projects={data.projects || []}
             certifications={data.certifications || []}
             languages={data.languages || []}
+            achievements={data.achievements || []}
         />
     );
 }

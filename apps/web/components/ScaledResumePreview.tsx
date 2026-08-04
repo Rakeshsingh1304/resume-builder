@@ -14,6 +14,8 @@ interface Props {
     skills: string[];
     projects?: any[];
     certifications?: any[];
+    languages?: any[];
+    achievements?: string[];
 }
 
 export default function ScaledResumePreview(props: Props) {

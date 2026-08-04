@@ -13,6 +13,8 @@ interface PersonalInfo {
     phone?: string;
     location?: string;
     linkedin?: string;
+    github?: string;
+    website?: string;
 }
 
 interface ExperienceEntry {
@@ -64,6 +66,7 @@ interface ResumeContent {
     projects?: ProjectEntry[];
     certifications?: CertificationEntry[];
     languages?: LanguageEntry[];
+    achievements?: string[];
 }
 
 interface Resume {
@@ -93,6 +96,8 @@ export default function ResumeBuilderPage() {
     const [projects, setProjects] = useState<ProjectEntry[]>([]);
     const [certifications, setCertifications] = useState<CertificationEntry[]>([]);
     const [languages, setLanguages] = useState<LanguageEntry[]>([]);
+    const [achievements, setAchievements] = useState<string[]>([]);
+    const [achievementInput, setAchievementInput] = useState("");
     const [summary, setSummary] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -114,6 +119,7 @@ export default function ResumeBuilderPage() {
             setProjects(data.content?.projects || []);
             setCertifications(data.content?.certifications || []);
             setLanguages(data.content?.languages || []);
+            setAchievements(data.content?.achievements || []);
             setLoading(false);
         }
         load();
@@ -213,6 +219,25 @@ export default function ResumeBuilderPage() {
         setLanguages((prev) => prev.filter((entry) => entry.id !== entryId));
     }
 
+    function addAchievement() {
+        const trimmed = achievementInput.trim();
+        if (trimmed) {
+            setAchievements((prev) => [...prev, trimmed]);
+        }
+        setAchievementInput("");
+    }
+
+    function removeAchievement(index: number) {
+        setAchievements((prev) => prev.filter((_, i) => i !== index));
+    }
+
+    function handleAchievementKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            addAchievement();
+        }
+    }
+
     function addSkill() {
         const trimmed = skillInput.trim();
         if (trimmed && !skills.includes(trimmed)) {
@@ -235,7 +260,7 @@ export default function ResumeBuilderPage() {
     async function handleSave() {
         setSaving(true);
         const token = await getToken();
-        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications, languages };
+        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications, languages, achievements };
         await apiFetch(`/api/resumes/${id}`, token, {
             method: "PATCH",
             body: JSON.stringify({ content: updatedContent }),
@@ -271,7 +296,7 @@ export default function ResumeBuilderPage() {
         setCheckingAts(true);
         const token = await getToken();
         try {
-            const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications, languages };
+            const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications, languages, achievements };
             await apiFetch(`/api/resumes/${id}`, token, {
                 method: "PATCH",
                 body: JSON.stringify({ content: updatedContent }),
@@ -432,6 +457,26 @@ export default function ResumeBuilderPage() {
                             onChange={(e) => updateField("linkedin", e.target.value)}
                             className="w-full border border-border rounded-md px-3 py-2 bg-background"
                             placeholder="linkedin.com/in/johndoe"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1 text-foreground">GitHub</label>
+                        <input
+                            type="text"
+                            value={personalInfo.github || ""}
+                            onChange={(e) => updateField("github", e.target.value)}
+                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                            placeholder="github.com/johndoe"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1 text-foreground">Portfolio Website</label>
+                        <input
+                            type="text"
+                            value={personalInfo.website || ""}
+                            onChange={(e) => updateField("website", e.target.value)}
+                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                            placeholder="johndoe.com"
                         />
                     </div>
                 </div>
@@ -788,6 +833,31 @@ export default function ResumeBuilderPage() {
                             </button>
                         </div>
                     ))}
+                </div>
+
+                {/* Achievements */}
+                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                    <h2 className="font-heading text-lg font-semibold text-foreground">Achievements</h2>
+
+                    <input
+                        type="text"
+                        value={achievementInput}
+                        onChange={(e) => setAchievementInput(e.target.value)}
+                        onKeyDown={handleAchievementKeyDown}
+                        className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                        placeholder="Type an achievement and press Enter (e.g. Winner - Smart India Hackathon 2025)"
+                    />
+
+                    <div className="space-y-1">
+                        {achievements.map((item, index) => (
+                            <div key={index} className="flex justify-between items-center text-sm bg-muted rounded-md px-3 py-2">
+                                <span className="text-foreground">{item}</span>
+                                <button onClick={() => removeAchievement(index)} className="text-destructive hover:opacity-70">
+                                    ×
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Skills */}

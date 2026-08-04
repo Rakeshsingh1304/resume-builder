@@ -4,6 +4,8 @@ interface PersonalInfo {
     phone?: string;
     location?: string;
     linkedin?: string;
+    github?: string;
+    website?: string;
 }
 
 interface ExperienceEntry {
@@ -55,6 +57,7 @@ interface ResumeTemplateProps {
     projects?: ProjectEntry[];
     certifications?: CertificationEntry[];
     languages?: LanguageEntry[];
+    achievements?: string[];
 }
 
 function formatDate(dateStr?: string) {
@@ -73,6 +76,7 @@ export default function ResumeTemplate({
     projects = [],
     certifications = [],
     languages = [],
+    achievements = [],
 }: ResumeTemplateProps) {
     return (
         <div className="bg-white text-black p-10 shadow-lg" style={{ width: "794px", minHeight: "1123px" }}>
@@ -84,6 +88,8 @@ export default function ResumeTemplate({
                     {personalInfo.phone && <span>• {personalInfo.phone}</span>}
                     {personalInfo.location && <span>• {personalInfo.location}</span>}
                     {personalInfo.linkedin && <span>• {personalInfo.linkedin}</span>}
+                    {personalInfo.github && <span>• {personalInfo.github}</span>}
+                    {personalInfo.website && <span>• {personalInfo.website}</span>}
                 </div>
             </div>
 
@@ -186,6 +192,20 @@ export default function ResumeTemplate({
                     <p className="text-sm text-gray-800">
                         {languages.map((lang) => `${lang.name} (${lang.proficiency})`).join(" • ")}
                     </p>
+                </div>
+            )}
+
+            {/* Achievements */}
+            {achievements.length > 0 && (
+                <div className="mt-4">
+                    <h2 className="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">
+                        Achievements
+                    </h2>
+                    <ul className="text-sm text-gray-800 list-disc list-inside space-y-0.5">
+                        {achievements.map((item, index) => (
+                            <li key={index}>{item}</li>
+                        ))}
+                    </ul>
                 </div>
             )}
 
