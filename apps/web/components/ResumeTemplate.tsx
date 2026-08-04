@@ -33,6 +33,13 @@ interface ProjectEntry {
     description?: string;
 }
 
+interface CertificationEntry {
+    id: string;
+    name?: string;
+    issuer?: string;
+    date?: string;
+}
+
 interface ResumeTemplateProps {
     personalInfo: PersonalInfo;
     summary: string;
@@ -40,6 +47,7 @@ interface ResumeTemplateProps {
     education: EducationEntry[];
     skills: string[];
     projects?: ProjectEntry[];
+    certifications?: CertificationEntry[];
 }
 
 function formatDate(dateStr?: string) {
@@ -56,6 +64,7 @@ export default function ResumeTemplate({
     education,
     skills,
     projects = [],
+    certifications = [],
 }: ResumeTemplateProps) {
     return (
         <div className="bg-white text-black p-10 shadow-lg" style={{ width: "794px", minHeight: "1123px" }}>
@@ -137,6 +146,24 @@ export default function ResumeTemplate({
                             </div>
                             {proj.techStack && <p className="text-xs text-gray-600 italic">{proj.techStack}</p>}
                             <p className="text-sm text-gray-800 mt-1">{proj.description}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Certifications */}
+            {certifications.length > 0 && (
+                <div className="mb-4">
+                    <h2 className="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">
+                        Certifications
+                    </h2>
+                    {certifications.map((cert) => (
+                        <div key={cert.id} className="flex justify-between items-baseline mb-1">
+                            <p className="text-sm">
+                                <span className="font-semibold">{cert.name}</span>
+                                {cert.issuer && <span className="text-gray-600"> — {cert.issuer}</span>}
+                            </p>
+                            <p className="text-xs text-gray-500">{formatDate(cert.date)}</p>
                         </div>
                     ))}
                 </div>

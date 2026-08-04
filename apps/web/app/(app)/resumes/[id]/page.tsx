@@ -42,6 +42,13 @@ interface ProjectEntry {
     description?: string;
 }
 
+interface CertificationEntry {
+    id: string;
+    name?: string;
+    issuer?: string;
+    date?: string;
+}
+
 interface ResumeContent {
     personalInfo?: PersonalInfo;
     experience?: ExperienceEntry[];
@@ -49,6 +56,7 @@ interface ResumeContent {
     skills?: string[];
     summary?: string;
     projects?: ProjectEntry[];
+    certifications?: CertificationEntry[];
 }
 
 interface Resume {
@@ -76,6 +84,7 @@ export default function ResumeBuilderPage() {
     const [skills, setSkills] = useState<string[]>([]);
     const [skillInput, setSkillInput] = useState("");
     const [projects, setProjects] = useState<ProjectEntry[]>([]);
+    const [certifications, setCertifications] = useState<CertificationEntry[]>([]);
     const [summary, setSummary] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -95,6 +104,7 @@ export default function ResumeBuilderPage() {
             setSkills(data.content?.skills || []);
             setSummary(data.content?.summary || "");
             setProjects(data.content?.projects || []);
+            setCertifications(data.content?.certifications || []);
             setLoading(false);
         }
         load();
@@ -163,6 +173,23 @@ export default function ResumeBuilderPage() {
         setProjects((prev) => prev.filter((entry) => entry.id !== entryId));
     }
 
+    function addCertification() {
+        setCertifications((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), name: "", issuer: "", date: "" },
+        ]);
+    }
+
+    function updateCertification(entryId: string, field: keyof CertificationEntry, value: string) {
+        setCertifications((prev) =>
+            prev.map((entry) => (entry.id === entryId ? { ...entry, [field]: value } : entry))
+        );
+    }
+
+    function removeCertification(entryId: string) {
+        setCertifications((prev) => prev.filter((entry) => entry.id !== entryId));
+    }
+
     function addSkill() {
         const trimmed = skillInput.trim();
         if (trimmed && !skills.includes(trimmed)) {
@@ -185,7 +212,7 @@ export default function ResumeBuilderPage() {
     async function handleSave() {
         setSaving(true);
         const token = await getToken();
-        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects };
+        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications };
         await apiFetch(`/api/resumes/${id}`, token, {
             method: "PATCH",
             body: JSON.stringify({ content: updatedContent }),
@@ -221,7 +248,7 @@ export default function ResumeBuilderPage() {
         setCheckingAts(true);
         const token = await getToken();
         try {
-            const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary };
+            const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications };
             await apiFetch(`/api/resumes/${id}`, token, {
                 method: "PATCH",
                 body: JSON.stringify({ content: updatedContent }),
@@ -641,6 +668,63 @@ export default function ResumeBuilderPage() {
                     ))}
                 </div>
 
+                {/* Certifications */}
+                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                    <div className="flex justify-between items-center gap-2">
+                        <h2 className="font-heading text-lg font-semibold text-foreground">Certifications</h2>
+                        <button onClick={addCertification} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
+                            + Add Certification
+                        </button>
+                    </div>
+
+                    {certifications.length === 0 && (
+                        <p className="text-muted-foreground text-sm">No certifications added yet.</p>
+                    )}
+
+                    {certifications.map((entry) => (
+                        <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
+                            <button
+                                onClick={() => removeCertification(entry.id)}
+                                className="absolute top-3 right-3 text-destructive text-sm hover:underline"
+                            >
+                                Remove
+                            </button>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Certification Name</label>
+                                <input
+                                    type="text"
+                                    value={entry.name || ""}
+                                    onChange={(e) => updateCertification(entry.id, "name", e.target.value)}
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                    placeholder="AWS Certified Developer"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Issuer</label>
+                                <input
+                                    type="text"
+                                    value={entry.issuer || ""}
+                                    onChange={(e) => updateCertification(entry.id, "issuer", e.target.value)}
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                    placeholder="Amazon Web Services"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Date</label>
+                                <input
+                                    type="month"
+                                    value={entry.date || ""}
+                                    onChange={(e) => updateCertification(entry.id, "date", e.target.value)}
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
                 {/* Skills */}
                 <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                     <h2 className="font-heading text-lg font-semibold text-foreground">Skills</h2>
@@ -695,6 +779,7 @@ export default function ResumeBuilderPage() {
                     education={education}
                     skills={skills}
                     projects={projects}
+                    certifications={certifications}
                 />
             </div>
         </div>
