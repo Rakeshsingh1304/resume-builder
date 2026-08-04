@@ -45,6 +45,7 @@ export default function PublicResumePage() {
                 experience={data.experience || []}
                 education={data.education || []}
                 skills={data.skills || []}
+                projects={data.projects || []}
             />
         </div>
     );

@@ -34,12 +34,21 @@ interface EducationEntry {
     endDate?: string;
 }
 
+interface ProjectEntry {
+    id: string;
+    title?: string;
+    techStack?: string;
+    link?: string;
+    description?: string;
+}
+
 interface ResumeContent {
     personalInfo?: PersonalInfo;
     experience?: ExperienceEntry[];
     education?: EducationEntry[];
     skills?: string[];
     summary?: string;
+    projects?: ProjectEntry[];
 }
 
 interface Resume {
@@ -66,6 +75,7 @@ export default function ResumeBuilderPage() {
     const [education, setEducation] = useState<EducationEntry[]>([]);
     const [skills, setSkills] = useState<string[]>([]);
     const [skillInput, setSkillInput] = useState("");
+    const [projects, setProjects] = useState<ProjectEntry[]>([]);
     const [summary, setSummary] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -84,6 +94,7 @@ export default function ResumeBuilderPage() {
             setEducation(data.content?.education || []);
             setSkills(data.content?.skills || []);
             setSummary(data.content?.summary || "");
+            setProjects(data.content?.projects || []);
             setLoading(false);
         }
         load();
@@ -135,6 +146,23 @@ export default function ResumeBuilderPage() {
         setEducation((prev) => prev.filter((entry) => entry.id !== entryId));
     }
 
+    function addProject() {
+        setProjects((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), title: "", techStack: "", link: "", description: "" },
+        ]);
+    }
+
+    function updateProject(entryId: string, field: keyof ProjectEntry, value: string) {
+        setProjects((prev) =>
+            prev.map((entry) => (entry.id === entryId ? { ...entry, [field]: value } : entry))
+        );
+    }
+
+    function removeProject(entryId: string) {
+        setProjects((prev) => prev.filter((entry) => entry.id !== entryId));
+    }
+
     function addSkill() {
         const trimmed = skillInput.trim();
         if (trimmed && !skills.includes(trimmed)) {
@@ -157,7 +185,7 @@ export default function ResumeBuilderPage() {
     async function handleSave() {
         setSaving(true);
         const token = await getToken();
-        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary };
+        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects };
         await apiFetch(`/api/resumes/${id}`, token, {
             method: "PATCH",
             body: JSON.stringify({ content: updatedContent }),
@@ -545,6 +573,74 @@ export default function ResumeBuilderPage() {
                     ))}
                 </div>
 
+                {/* Projects */}
+                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                    <div className="flex justify-between items-center gap-2">
+                        <h2 className="font-heading text-lg font-semibold text-foreground">Projects</h2>
+                        <button onClick={addProject} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
+                            + Add Project
+                        </button>
+                    </div>
+
+                    {projects.length === 0 && (
+                        <p className="text-muted-foreground text-sm">No projects added yet.</p>
+                    )}
+
+                    {projects.map((entry) => (
+                        <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
+                            <button
+                                onClick={() => removeProject(entry.id)}
+                                className="absolute top-3 right-3 text-destructive text-sm hover:underline"
+                            >
+                                Remove
+                            </button>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Project Title</label>
+                                <input
+                                    type="text"
+                                    value={entry.title || ""}
+                                    onChange={(e) => updateProject(entry.id, "title", e.target.value)}
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                    placeholder="E-commerce Website"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Tech Stack</label>
+                                <input
+                                    type="text"
+                                    value={entry.techStack || ""}
+                                    onChange={(e) => updateProject(entry.id, "techStack", e.target.value)}
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                    placeholder="React, Node.js, MongoDB"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Project Link (optional)</label>
+                                <input
+                                    type="text"
+                                    value={entry.link || ""}
+                                    onChange={(e) => updateProject(entry.id, "link", e.target.value)}
+                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                    placeholder="github.com/username/project"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1 text-foreground">Description</label>
+                                <textarea
+                                    value={entry.description || ""}
+                                    onChange={(e) => updateProject(entry.id, "description", e.target.value)}
+                                    className="w-full border border-border rounded-md px-3 py-2 h-20 bg-card"
+                                    placeholder="What did you build and what problem did it solve?"
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
                 {/* Skills */}
                 <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                     <h2 className="font-heading text-lg font-semibold text-foreground">Skills</h2>
@@ -598,6 +694,7 @@ export default function ResumeBuilderPage() {
                     experience={experience}
                     education={education}
                     skills={skills}
+                    projects={projects}
                 />
             </div>
         </div>

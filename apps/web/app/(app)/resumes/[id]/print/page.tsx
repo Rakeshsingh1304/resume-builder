@@ -37,6 +37,7 @@ export default function PrintResumePage() {
             experience={data.experience || []}
             education={data.education || []}
             skills={data.skills || []}
+            projects={data.projects || []}
         />
     );
 }

@@ -25,12 +25,21 @@ interface EducationEntry {
     endDate?: string;
 }
 
+interface ProjectEntry {
+    id: string;
+    title?: string;
+    techStack?: string;
+    link?: string;
+    description?: string;
+}
+
 interface ResumeTemplateProps {
     personalInfo: PersonalInfo;
     summary: string;
     experience: ExperienceEntry[];
     education: EducationEntry[];
     skills: string[];
+    projects?: ProjectEntry[];
 }
 
 function formatDate(dateStr?: string) {
@@ -46,6 +55,7 @@ export default function ResumeTemplate({
     experience,
     education,
     skills,
+    projects = [],
 }: ResumeTemplateProps) {
     return (
         <div className="bg-white text-black p-10 shadow-lg" style={{ width: "794px", minHeight: "1123px" }}>
@@ -108,6 +118,25 @@ export default function ResumeTemplate({
                                 </p>
                             </div>
                             <p className="text-sm text-gray-600 italic">{edu.institution}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Projects */}
+            {projects.length > 0 && (
+                <div className="mb-4">
+                    <h2 className="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">
+                        Projects
+                    </h2>
+                    {projects.map((proj) => (
+                        <div key={proj.id} className="mb-3">
+                            <div className="flex justify-between items-baseline">
+                                <p className="font-semibold text-sm">{proj.title}</p>
+                                {proj.link && <p className="text-xs text-gray-500">{proj.link}</p>}
+                            </div>
+                            {proj.techStack && <p className="text-xs text-gray-600 italic">{proj.techStack}</p>}
+                            <p className="text-sm text-gray-800 mt-1">{proj.description}</p>
                         </div>
                     ))}
                 </div>
