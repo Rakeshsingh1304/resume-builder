@@ -40,6 +40,12 @@ interface CertificationEntry {
     date?: string;
 }
 
+interface LanguageEntry {
+    id: string;
+    name?: string;
+    proficiency?: string;
+}
+
 interface ResumeTemplateProps {
     personalInfo: PersonalInfo;
     summary: string;
@@ -48,6 +54,7 @@ interface ResumeTemplateProps {
     skills: string[];
     projects?: ProjectEntry[];
     certifications?: CertificationEntry[];
+    languages?: LanguageEntry[];
 }
 
 function formatDate(dateStr?: string) {
@@ -65,6 +72,7 @@ export default function ResumeTemplate({
     skills,
     projects = [],
     certifications = [],
+    languages = [],
 }: ResumeTemplateProps) {
     return (
         <div className="bg-white text-black p-10 shadow-lg" style={{ width: "794px", minHeight: "1123px" }}>
@@ -166,6 +174,18 @@ export default function ResumeTemplate({
                             <p className="text-xs text-gray-500">{formatDate(cert.date)}</p>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* Languages */}
+            {languages.length > 0 && (
+                <div className="mt-4">
+                    <h2 className="text-sm font-bold uppercase tracking-wide text-gray-700 mb-2">
+                        Languages
+                    </h2>
+                    <p className="text-sm text-gray-800">
+                        {languages.map((lang) => `${lang.name} (${lang.proficiency})`).join(" • ")}
+                    </p>
                 </div>
             )}
 

@@ -39,6 +39,7 @@ export default function PrintResumePage() {
             skills={data.skills || []}
             projects={data.projects || []}
             certifications={data.certifications || []}
+            languages={data.languages || []}
         />
     );
 }

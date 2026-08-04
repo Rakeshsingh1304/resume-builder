@@ -49,6 +49,12 @@ interface CertificationEntry {
     date?: string;
 }
 
+interface LanguageEntry {
+    id: string;
+    name?: string;
+    proficiency?: string;
+}
+
 interface ResumeContent {
     personalInfo?: PersonalInfo;
     experience?: ExperienceEntry[];
@@ -57,6 +63,7 @@ interface ResumeContent {
     summary?: string;
     projects?: ProjectEntry[];
     certifications?: CertificationEntry[];
+    languages?: LanguageEntry[];
 }
 
 interface Resume {
@@ -85,6 +92,7 @@ export default function ResumeBuilderPage() {
     const [skillInput, setSkillInput] = useState("");
     const [projects, setProjects] = useState<ProjectEntry[]>([]);
     const [certifications, setCertifications] = useState<CertificationEntry[]>([]);
+    const [languages, setLanguages] = useState<LanguageEntry[]>([]);
     const [summary, setSummary] = useState("");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -105,6 +113,7 @@ export default function ResumeBuilderPage() {
             setSummary(data.content?.summary || "");
             setProjects(data.content?.projects || []);
             setCertifications(data.content?.certifications || []);
+            setLanguages(data.content?.languages || []);
             setLoading(false);
         }
         load();
@@ -190,6 +199,20 @@ export default function ResumeBuilderPage() {
         setCertifications((prev) => prev.filter((entry) => entry.id !== entryId));
     }
 
+    function addLanguage() {
+        setLanguages((prev) => [...prev, { id: crypto.randomUUID(), name: "", proficiency: "Conversational" }]);
+    }
+
+    function updateLanguage(entryId: string, field: keyof LanguageEntry, value: string) {
+        setLanguages((prev) =>
+            prev.map((entry) => (entry.id === entryId ? { ...entry, [field]: value } : entry))
+        );
+    }
+
+    function removeLanguage(entryId: string) {
+        setLanguages((prev) => prev.filter((entry) => entry.id !== entryId));
+    }
+
     function addSkill() {
         const trimmed = skillInput.trim();
         if (trimmed && !skills.includes(trimmed)) {
@@ -212,7 +235,7 @@ export default function ResumeBuilderPage() {
     async function handleSave() {
         setSaving(true);
         const token = await getToken();
-        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications };
+        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications, languages };
         await apiFetch(`/api/resumes/${id}`, token, {
             method: "PATCH",
             body: JSON.stringify({ content: updatedContent }),
@@ -248,7 +271,7 @@ export default function ResumeBuilderPage() {
         setCheckingAts(true);
         const token = await getToken();
         try {
-            const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications };
+            const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications, languages };
             await apiFetch(`/api/resumes/${id}`, token, {
                 method: "PATCH",
                 body: JSON.stringify({ content: updatedContent }),
@@ -725,6 +748,48 @@ export default function ResumeBuilderPage() {
                     ))}
                 </div>
 
+                {/* Languages */}
+                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                    <div className="flex justify-between items-center gap-2">
+                        <h2 className="font-heading text-lg font-semibold text-foreground">Languages</h2>
+                        <button onClick={addLanguage} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
+                            + Add Language
+                        </button>
+                    </div>
+
+                    {languages.length === 0 && (
+                        <p className="text-muted-foreground text-sm">No languages added yet.</p>
+                    )}
+
+                    {languages.map((entry) => (
+                        <div key={entry.id} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                            <input
+                                type="text"
+                                value={entry.name || ""}
+                                onChange={(e) => updateLanguage(entry.id, "name", e.target.value)}
+                                className="flex-1 border border-border rounded-md px-3 py-2 bg-background"
+                                placeholder="English"
+                            />
+                            <select
+                                value={entry.proficiency || "Conversational"}
+                                onChange={(e) => updateLanguage(entry.id, "proficiency", e.target.value)}
+                                className="border border-border rounded-md px-3 py-2 bg-background"
+                            >
+                                <option>Native</option>
+                                <option>Fluent</option>
+                                <option>Conversational</option>
+                                <option>Basic</option>
+                            </select>
+                            <button
+                                onClick={() => removeLanguage(entry.id)}
+                                className="text-destructive text-sm hover:underline whitespace-nowrap"
+                            >
+                                Remove
+                            </button>
+                        </div>
+                    ))}
+                </div>
+
                 {/* Skills */}
                 <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                     <h2 className="font-heading text-lg font-semibold text-foreground">Skills</h2>
@@ -780,6 +845,7 @@ export default function ResumeBuilderPage() {
                     skills={skills}
                     projects={projects}
                     certifications={certifications}
+                    languages={languages}
                 />
             </div>
         </div>
