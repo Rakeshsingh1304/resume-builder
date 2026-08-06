@@ -36,8 +36,13 @@ export default function ScaledResumePreview(props: Props) {
     }, []);
 
     return (
-        <div ref={containerRef} className="w-full" style={{ height: A4_HEIGHT * scale }}>
+        <div
+            ref={containerRef}
+            className="w-full resume-preview-outer"
+            style={{ height: A4_HEIGHT * scale }}
+        >
             <div
+                className="resume-preview-inner"
                 style={{
                     width: A4_WIDTH,
                     height: A4_HEIGHT,

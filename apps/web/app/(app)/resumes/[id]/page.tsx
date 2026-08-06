@@ -657,7 +657,7 @@ export default function ResumeBuilderPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-sm font-medium mb-1 text-foreground">Start Date</label>
                                     <input
@@ -929,6 +929,7 @@ export default function ResumeBuilderPage() {
                     projects={projects}
                     certifications={certifications}
                     languages={languages}
+                    achievements={achievements}
                 />
             </div>
         </div>
