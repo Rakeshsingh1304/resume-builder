@@ -2,7 +2,7 @@ import { Injectable, ForbiddenException } from '@nestjs/common';
 import { GeminiProvider } from './providers/gemini.provider';
 import { PrismaService } from '../prisma/prisma.service';
 
-const FREE_MONTHLY_LIMIT = 5;
+const FREE_MONTHLY_LIMIT = 10;
 
 @Injectable()
 export class AiService {

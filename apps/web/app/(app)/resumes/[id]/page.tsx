@@ -9,6 +9,7 @@ import ScaledResumePreview from "@/components/ScaledResumePreview";
 
 interface PersonalInfo {
     fullName?: string;
+    title?: string;
     email?: string;
     phone?: string;
     location?: string;
@@ -419,6 +420,18 @@ export default function ResumeBuilderPage() {
                             placeholder="John Doe"
                         />
                     </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1 text-foreground">Professional Title</label>
+                        <input
+                            type="text"
+                            value={personalInfo.title || ""}
+                            onChange={(e) => updateField("title", e.target.value)}
+                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                            placeholder="Full Stack Developer | React Expert"
+                        />
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium mb-1 text-foreground">Email</label>
                         <input
