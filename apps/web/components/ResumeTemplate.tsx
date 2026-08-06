@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin, Globe, Linkedin, Github } from "lucide-react";
+import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 
 interface PersonalInfo {
     fullName?: string;
@@ -140,12 +140,12 @@ export default function ResumeTemplate({
                     <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-1.5 text-[13px] text-gray-700">
                         {personalInfo.linkedin && (
                             <span className="flex items-center gap-1.5">
-                                <Linkedin size={13} className="text-[#E3A008]" /> {personalInfo.linkedin}
+                                <Link size={13} className="text-[#E3A008]" /> {personalInfo.linkedin}
                             </span>
                         )}
                         {personalInfo.github && (
                             <span className="flex items-center gap-1.5">
-                                <Github size={13} className="text-[#E3A008]" /> {personalInfo.github}
+                                <Link size={13} className="text-[#E3A008]" /> {personalInfo.github}
                             </span>
                         )}
                     </div>
