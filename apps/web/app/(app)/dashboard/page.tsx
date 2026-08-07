@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { Pencil, Check, X, Trash2, Loader2 } from "lucide-react";
+import NewResumeModal from "@/components/NewResumeModal";
 
 interface Resume {
     id: string;
@@ -18,7 +19,9 @@ export default function DashboardPage() {
     const router = useRouter();
     const [resumes, setResumes] = useState<Resume[]>([]);
     const [loading, setLoading] = useState(true);
-    const [creating, setCreating] = useState(false);
+
+    // "+ New Resume" modal
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     // Inline rename state
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -39,26 +42,6 @@ export default function DashboardPage() {
     useEffect(() => {
         loadResumes();
     }, []);
-
-    async function handleCreateResume() {
-        const name = window.prompt(
-            "Give your resume a name (e.g. Software Engineer Resume):",
-            ""
-        );
-        // If user clicked "Cancel", don't create anything
-        if (name === null) return;
-
-        const title = name.trim() || "Untitled Resume";
-
-        setCreating(true);
-        const token = await getToken();
-        await apiFetch("/api/resumes", token, {
-            method: "POST",
-            body: JSON.stringify({ title }),
-        });
-        await loadResumes();
-        setCreating(false);
-    }
 
     function startEditing(resume: Resume) {
         setEditingId(resume.id);
@@ -120,11 +103,10 @@ export default function DashboardPage() {
                     </p>
                 </div>
                 <button
-                    onClick={handleCreateResume}
-                    disabled={creating}
-                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 transition disabled:opacity-50 w-full sm:w-auto whitespace-nowrap"
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-primary text-primary-foreground px-4 py-2.5 rounded-md text-sm font-medium hover:opacity-90 transition w-full sm:w-auto whitespace-nowrap"
                 >
-                    {creating ? "Creating..." : "+ New Resume"}
+                    + New Resume
                 </button>
             </div>
 
@@ -244,6 +226,12 @@ export default function DashboardPage() {
                     })}
                 </div>
             )}
+
+            <NewResumeModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onCreated={loadResumes}
+            />
         </div>
     );
 }

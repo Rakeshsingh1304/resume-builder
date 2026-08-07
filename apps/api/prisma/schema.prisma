@@ -50,6 +50,7 @@ enum AIFeature {
   EXPERIENCE_GEN
   ATS_CHECK
   COVER_LETTER_GEN
+  RESUME_IMPORT
 }
 
 model AICreditUsage {
