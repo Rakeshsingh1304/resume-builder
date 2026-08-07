@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import ResumeTemplate from "@/components/ResumeTemplate";
@@ -85,6 +85,22 @@ interface AtsBreakdownItem {
     feedback: string;
 }
 
+// ---- Wizard steps configuration ----
+// Order of the fill-in-the-form sections. ATS Score & Public Sharing are
+// shown separately above the wizard since they are actions/tools, not
+// data-entry steps.
+const STEPS = [
+    { key: "personal", label: "Personal Info" },
+    { key: "summary", label: "Summary" },
+    { key: "experience", label: "Experience" },
+    { key: "education", label: "Education" },
+    { key: "projects", label: "Projects" },
+    { key: "certifications", label: "Certifications" },
+    { key: "languages", label: "Languages" },
+    { key: "achievements", label: "Achievements" },
+    { key: "skills", label: "Skills" },
+] as const;
+
 export default function ResumeBuilderPage() {
     const { id } = useParams<{ id: string }>();
     const { getToken } = useAuth();
@@ -106,6 +122,30 @@ export default function ResumeBuilderPage() {
     const [atsScore, setAtsScore] = useState<number | null>(null);
     const [atsBreakdown, setAtsBreakdown] = useState<AtsBreakdownItem[]>([]);
     const [checkingAts, setCheckingAts] = useState(false);
+
+    // ---- Wizard state ----
+    const [currentStep, setCurrentStep] = useState(0);
+    const formTopRef = useRef<HTMLDivElement | null>(null);
+    const isFirstRender = useRef(true);
+
+    // Scroll the form back to the top of the current step whenever the
+    // step changes (Next / Back / clicking a step tab), but not on the
+    // very first render (page load).
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        formTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [currentStep]);
+
+    function goNext() {
+        setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
+    }
+
+    function goBack() {
+        setCurrentStep((s) => Math.max(s - 1, 0));
+    }
 
     useEffect(() => {
         async function load() {
@@ -326,6 +366,8 @@ export default function ResumeBuilderPage() {
 
     if (loading) return <div className="p-10 text-muted-foreground">Loading...</div>;
 
+    const isLastStep = currentStep === STEPS.length - 1;
+
     return (
         <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-8">
             {/* Left Side: Form */}
@@ -406,501 +448,581 @@ export default function ResumeBuilderPage() {
                     )}
                 </div>
 
-                {/* Personal Info */}
-                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <h2 className="font-heading text-lg font-semibold text-foreground">Personal Information</h2>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-foreground">Full Name</label>
-                        <input
-                            type="text"
-                            value={personalInfo.fullName || ""}
-                            onChange={(e) => updateField("fullName", e.target.value)}
-                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                            placeholder="John Doe"
-                        />
+                {/* ============== WIZARD: step progress + tabs ============== */}
+                <div ref={formTopRef} className="mb-4 scroll-mt-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-foreground">
+                            Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep].label}
+                        </span>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {Math.round(((currentStep + 1) / STEPS.length) * 100)}% complete
+                        </span>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-foreground">Professional Title</label>
-                        <input
-                            type="text"
-                            value={personalInfo.title || ""}
-                            onChange={(e) => updateField("title", e.target.value)}
-                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                            placeholder="Full Stack Developer | React Expert"
+                    <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-primary transition-all duration-300"
+                            style={{ width: `${((currentStep + 1) / STEPS.length) * 100}%` }}
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-foreground">Email</label>
-                        <input
-                            type="email"
-                            value={personalInfo.email || ""}
-                            onChange={(e) => updateField("email", e.target.value)}
-                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                            placeholder="john@example.com"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-foreground">Phone</label>
-                        <input
-                            type="text"
-                            value={personalInfo.phone || ""}
-                            onChange={(e) => updateField("phone", e.target.value)}
-                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                            placeholder="+91 98765 43210"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-foreground">Location</label>
-                        <input
-                            type="text"
-                            value={personalInfo.location || ""}
-                            onChange={(e) => updateField("location", e.target.value)}
-                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                            placeholder="Surat, India"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-foreground">LinkedIn</label>
-                        <input
-                            type="text"
-                            value={personalInfo.linkedin || ""}
-                            onChange={(e) => updateField("linkedin", e.target.value)}
-                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                            placeholder="linkedin.com/in/johndoe"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-foreground">GitHub</label>
-                        <input
-                            type="text"
-                            value={personalInfo.github || ""}
-                            onChange={(e) => updateField("github", e.target.value)}
-                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                            placeholder="github.com/johndoe"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1 text-foreground">Portfolio Website</label>
-                        <input
-                            type="text"
-                            value={personalInfo.website || ""}
-                            onChange={(e) => updateField("website", e.target.value)}
-                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                            placeholder="johndoe.com"
-                        />
-                    </div>
-                </div>
-
-                {/* Summary */}
-                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                        <h2 className="font-heading text-lg font-semibold text-foreground">Professional Summary</h2>
-                        <button
-                            onClick={handleGenerateSummary}
-                            disabled={generatingSummary}
-                            className="text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 whitespace-nowrap w-full sm:w-auto"
-                        >
-                            {generatingSummary ? "Generating..." : "✨ Generate with AI"}
-                        </button>
-                    </div>
-                    <textarea
-                        value={summary}
-                        onChange={(e) => setSummary(e.target.value)}
-                        className="w-full border border-border rounded-md px-3 py-2 h-28 bg-background"
-                        placeholder="A brief 2-3 sentence summary highlighting your key strengths and career goals..."
-                    />
-                </div>
-
-                {/* Experience */}
-                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex justify-between items-center gap-2">
-                        <h2 className="font-heading text-lg font-semibold text-foreground">Work Experience</h2>
-                        <button onClick={addExperience} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
-                            + Add Experience
-                        </button>
-                    </div>
-
-                    {experience.length === 0 && (
-                        <p className="text-muted-foreground text-sm">No experience added yet.</p>
-                    )}
-
-                    {experience.map((entry) => (
-                        <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
+                    {/* Step tabs — horizontally scrollable so it fits on mobile */}
+                    <div className="flex gap-2 mt-3 overflow-x-auto pb-1 -mx-1 px-1">
+                        {STEPS.map((step, idx) => (
                             <button
-                                onClick={() => removeExperience(entry.id)}
-                                className="absolute top-3 right-3 text-destructive text-sm hover:underline"
+                                key={step.key}
+                                onClick={() => setCurrentStep(idx)}
+                                className={`shrink-0 text-xs px-3 py-1.5 rounded-full whitespace-nowrap border transition ${idx === currentStep
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : idx < currentStep
+                                        ? "bg-muted text-foreground border-border"
+                                        : "bg-background text-muted-foreground border-border"
+                                    }`}
                             >
-                                Remove
+                                {idx + 1}. {step.label}
                             </button>
+                        ))}
+                    </div>
+                </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Company</label>
-                                <input
-                                    type="text"
-                                    value={entry.company || ""}
-                                    onChange={(e) => updateExperience(entry.id, "company", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    placeholder="Google"
-                                />
-                            </div>
+                {/* ============== STEP 1: Personal Info ============== */}
+                {currentStep === 0 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <h2 className="font-heading text-lg font-semibold text-foreground">Personal Information</h2>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Job Title</label>
-                                <input
-                                    type="text"
-                                    value={entry.role || ""}
-                                    onChange={(e) => updateExperience(entry.id, "role", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    placeholder="Software Engineer"
-                                />
-                            </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-foreground">Full Name</label>
+                            <input
+                                type="text"
+                                value={personalInfo.fullName || ""}
+                                onChange={(e) => updateField("fullName", e.target.value)}
+                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                                placeholder="John Doe"
+                            />
+                        </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-foreground">Professional Title</label>
+                            <input
+                                type="text"
+                                value={personalInfo.title || ""}
+                                onChange={(e) => updateField("title", e.target.value)}
+                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                                placeholder="Full Stack Developer | React Expert"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-foreground">Email</label>
+                            <input
+                                type="email"
+                                value={personalInfo.email || ""}
+                                onChange={(e) => updateField("email", e.target.value)}
+                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                                placeholder="john@example.com"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-foreground">Phone</label>
+                            <input
+                                type="text"
+                                value={personalInfo.phone || ""}
+                                onChange={(e) => updateField("phone", e.target.value)}
+                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                                placeholder="+91 98765 43210"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-foreground">Location</label>
+                            <input
+                                type="text"
+                                value={personalInfo.location || ""}
+                                onChange={(e) => updateField("location", e.target.value)}
+                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                                placeholder="Surat, India"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-foreground">LinkedIn</label>
+                            <input
+                                type="text"
+                                value={personalInfo.linkedin || ""}
+                                onChange={(e) => updateField("linkedin", e.target.value)}
+                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                                placeholder="linkedin.com/in/johndoe"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-foreground">GitHub</label>
+                            <input
+                                type="text"
+                                value={personalInfo.github || ""}
+                                onChange={(e) => updateField("github", e.target.value)}
+                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                                placeholder="github.com/johndoe"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-foreground">Portfolio Website</label>
+                            <input
+                                type="text"
+                                value={personalInfo.website || ""}
+                                onChange={(e) => updateField("website", e.target.value)}
+                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                                placeholder="johndoe.com"
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* ============== STEP 2: Summary ============== */}
+                {currentStep === 1 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                            <h2 className="font-heading text-lg font-semibold text-foreground">Professional Summary</h2>
+                            <button
+                                onClick={handleGenerateSummary}
+                                disabled={generatingSummary}
+                                className="text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 whitespace-nowrap w-full sm:w-auto"
+                            >
+                                {generatingSummary ? "Generating..." : "✨ Generate with AI"}
+                            </button>
+                        </div>
+                        <textarea
+                            value={summary}
+                            onChange={(e) => setSummary(e.target.value)}
+                            className="w-full border border-border rounded-md px-3 py-2 h-28 bg-background"
+                            placeholder="A brief 2-3 sentence summary highlighting your key strengths and career goals..."
+                        />
+                    </div>
+                )}
+
+                {/* ============== STEP 3: Experience ============== */}
+                {currentStep === 2 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <div className="flex justify-between items-center gap-2">
+                            <h2 className="font-heading text-lg font-semibold text-foreground">Work Experience</h2>
+                            <button onClick={addExperience} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
+                                + Add Experience
+                            </button>
+                        </div>
+
+                        {experience.length === 0 && (
+                            <p className="text-muted-foreground text-sm">No experience added yet.</p>
+                        )}
+
+                        {experience.map((entry) => (
+                            <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
+                                <button
+                                    onClick={() => removeExperience(entry.id)}
+                                    className="absolute top-3 right-3 text-destructive text-sm hover:underline"
+                                >
+                                    Remove
+                                </button>
+
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-foreground">Start Date</label>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Company</label>
+                                    <input
+                                        type="text"
+                                        value={entry.company || ""}
+                                        onChange={(e) => updateExperience(entry.id, "company", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        placeholder="Google"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Job Title</label>
+                                    <input
+                                        type="text"
+                                        value={entry.role || ""}
+                                        onChange={(e) => updateExperience(entry.id, "role", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        placeholder="Software Engineer"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 text-foreground">Start Date</label>
+                                        <input
+                                            type="month"
+                                            value={entry.startDate || ""}
+                                            onChange={(e) => updateExperience(entry.id, "startDate", e.target.value)}
+                                            className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 text-foreground">End Date</label>
+                                        <input
+                                            type="month"
+                                            value={entry.endDate || ""}
+                                            disabled={entry.currentlyWorking}
+                                            onChange={(e) => updateExperience(entry.id, "endDate", e.target.value)}
+                                            className="w-full border border-border rounded-md px-3 py-2 bg-card disabled:bg-muted"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={entry.currentlyWorking || false}
+                                        onChange={(e) => updateExperience(entry.id, "currentlyWorking", e.target.checked)}
+                                    />
+                                    <label className="text-sm text-foreground">I currently work here</label>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Description</label>
+                                    <textarea
+                                        value={entry.description || ""}
+                                        onChange={(e) => updateExperience(entry.id, "description", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 h-24 bg-card"
+                                        placeholder="Describe your responsibilities and achievements..."
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* ============== STEP 4: Education ============== */}
+                {currentStep === 3 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <div className="flex justify-between items-center gap-2">
+                            <h2 className="font-heading text-lg font-semibold text-foreground">Education</h2>
+                            <button onClick={addEducation} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
+                                + Add Education
+                            </button>
+                        </div>
+
+                        {education.length === 0 && (
+                            <p className="text-muted-foreground text-sm">No education added yet.</p>
+                        )}
+
+                        {education.map((entry) => (
+                            <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
+                                <button
+                                    onClick={() => removeEducation(entry.id)}
+                                    className="absolute top-3 right-3 text-destructive text-sm hover:underline"
+                                >
+                                    Remove
+                                </button>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Institution</label>
+                                    <input
+                                        type="text"
+                                        value={entry.institution || ""}
+                                        onChange={(e) => updateEducation(entry.id, "institution", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        placeholder="Stanford University"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Degree</label>
+                                    <input
+                                        type="text"
+                                        value={entry.degree || ""}
+                                        onChange={(e) => updateEducation(entry.id, "degree", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        placeholder="Bachelor of Technology"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Field of Study</label>
+                                    <input
+                                        type="text"
+                                        value={entry.fieldOfStudy || ""}
+                                        onChange={(e) => updateEducation(entry.id, "fieldOfStudy", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        placeholder="Computer Science"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 text-foreground">Start Date</label>
+                                        <input
+                                            type="month"
+                                            value={entry.startDate || ""}
+                                            onChange={(e) => updateEducation(entry.id, "startDate", e.target.value)}
+                                            className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-1 text-foreground">End Date</label>
+                                        <input
+                                            type="month"
+                                            value={entry.endDate || ""}
+                                            onChange={(e) => updateEducation(entry.id, "endDate", e.target.value)}
+                                            className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* ============== STEP 5: Projects ============== */}
+                {currentStep === 4 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <div className="flex justify-between items-center gap-2">
+                            <h2 className="font-heading text-lg font-semibold text-foreground">Projects</h2>
+                            <button onClick={addProject} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
+                                + Add Project
+                            </button>
+                        </div>
+
+                        {projects.length === 0 && (
+                            <p className="text-muted-foreground text-sm">No projects added yet.</p>
+                        )}
+
+                        {projects.map((entry) => (
+                            <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
+                                <button
+                                    onClick={() => removeProject(entry.id)}
+                                    className="absolute top-3 right-3 text-destructive text-sm hover:underline"
+                                >
+                                    Remove
+                                </button>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Project Title</label>
+                                    <input
+                                        type="text"
+                                        value={entry.title || ""}
+                                        onChange={(e) => updateProject(entry.id, "title", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        placeholder="E-commerce Website"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Tech Stack</label>
+                                    <input
+                                        type="text"
+                                        value={entry.techStack || ""}
+                                        onChange={(e) => updateProject(entry.id, "techStack", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        placeholder="React, Node.js, MongoDB"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Project Link (optional)</label>
+                                    <input
+                                        type="text"
+                                        value={entry.link || ""}
+                                        onChange={(e) => updateProject(entry.id, "link", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        placeholder="github.com/username/project"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Description</label>
+                                    <textarea
+                                        value={entry.description || ""}
+                                        onChange={(e) => updateProject(entry.id, "description", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 h-20 bg-card"
+                                        placeholder="What did you build and what problem did it solve?"
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* ============== STEP 6: Certifications ============== */}
+                {currentStep === 5 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <div className="flex justify-between items-center gap-2">
+                            <h2 className="font-heading text-lg font-semibold text-foreground">Certifications</h2>
+                            <button onClick={addCertification} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
+                                + Add Certification
+                            </button>
+                        </div>
+
+                        {certifications.length === 0 && (
+                            <p className="text-muted-foreground text-sm">No certifications added yet.</p>
+                        )}
+
+                        {certifications.map((entry) => (
+                            <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
+                                <button
+                                    onClick={() => removeCertification(entry.id)}
+                                    className="absolute top-3 right-3 text-destructive text-sm hover:underline"
+                                >
+                                    Remove
+                                </button>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Certification Name</label>
+                                    <input
+                                        type="text"
+                                        value={entry.name || ""}
+                                        onChange={(e) => updateCertification(entry.id, "name", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        placeholder="AWS Certified Developer"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Issuer</label>
+                                    <input
+                                        type="text"
+                                        value={entry.issuer || ""}
+                                        onChange={(e) => updateCertification(entry.id, "issuer", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
+                                        placeholder="Amazon Web Services"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Date</label>
                                     <input
                                         type="month"
-                                        value={entry.startDate || ""}
-                                        onChange={(e) => updateExperience(entry.id, "startDate", e.target.value)}
+                                        value={entry.date || ""}
+                                        onChange={(e) => updateCertification(entry.id, "date", e.target.value)}
                                         className="w-full border border-border rounded-md px-3 py-2 bg-card"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-foreground">End Date</label>
-                                    <input
-                                        type="month"
-                                        value={entry.endDate || ""}
-                                        disabled={entry.currentlyWorking}
-                                        onChange={(e) => updateExperience(entry.id, "endDate", e.target.value)}
-                                        className="w-full border border-border rounded-md px-3 py-2 bg-card disabled:bg-muted"
-                                    />
-                                </div>
                             </div>
-
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    checked={entry.currentlyWorking || false}
-                                    onChange={(e) => updateExperience(entry.id, "currentlyWorking", e.target.checked)}
-                                />
-                                <label className="text-sm text-foreground">I currently work here</label>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Description</label>
-                                <textarea
-                                    value={entry.description || ""}
-                                    onChange={(e) => updateExperience(entry.id, "description", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 h-24 bg-card"
-                                    placeholder="Describe your responsibilities and achievements..."
-                                />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Education */}
-                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex justify-between items-center gap-2">
-                        <h2 className="font-heading text-lg font-semibold text-foreground">Education</h2>
-                        <button onClick={addEducation} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
-                            + Add Education
-                        </button>
+                        ))}
                     </div>
+                )}
 
-                    {education.length === 0 && (
-                        <p className="text-muted-foreground text-sm">No education added yet.</p>
-                    )}
-
-                    {education.map((entry) => (
-                        <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
-                            <button
-                                onClick={() => removeEducation(entry.id)}
-                                className="absolute top-3 right-3 text-destructive text-sm hover:underline"
-                            >
-                                Remove
+                {/* ============== STEP 7: Languages ============== */}
+                {currentStep === 6 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <div className="flex justify-between items-center gap-2">
+                            <h2 className="font-heading text-lg font-semibold text-foreground">Languages</h2>
+                            <button onClick={addLanguage} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
+                                + Add Language
                             </button>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Institution</label>
-                                <input
-                                    type="text"
-                                    value={entry.institution || ""}
-                                    onChange={(e) => updateEducation(entry.id, "institution", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    placeholder="Stanford University"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Degree</label>
-                                <input
-                                    type="text"
-                                    value={entry.degree || ""}
-                                    onChange={(e) => updateEducation(entry.id, "degree", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    placeholder="Bachelor of Technology"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Field of Study</label>
-                                <input
-                                    type="text"
-                                    value={entry.fieldOfStudy || ""}
-                                    onChange={(e) => updateEducation(entry.id, "fieldOfStudy", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    placeholder="Computer Science"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-foreground">Start Date</label>
-                                    <input
-                                        type="month"
-                                        value={entry.startDate || ""}
-                                        onChange={(e) => updateEducation(entry.id, "startDate", e.target.value)}
-                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1 text-foreground">End Date</label>
-                                    <input
-                                        type="month"
-                                        value={entry.endDate || ""}
-                                        onChange={(e) => updateEducation(entry.id, "endDate", e.target.value)}
-                                        className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    />
-                                </div>
-                            </div>
                         </div>
-                    ))}
-                </div>
 
-                {/* Projects */}
-                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex justify-between items-center gap-2">
-                        <h2 className="font-heading text-lg font-semibold text-foreground">Projects</h2>
-                        <button onClick={addProject} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
-                            + Add Project
-                        </button>
-                    </div>
+                        {languages.length === 0 && (
+                            <p className="text-muted-foreground text-sm">No languages added yet.</p>
+                        )}
 
-                    {projects.length === 0 && (
-                        <p className="text-muted-foreground text-sm">No projects added yet.</p>
-                    )}
-
-                    {projects.map((entry) => (
-                        <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
-                            <button
-                                onClick={() => removeProject(entry.id)}
-                                className="absolute top-3 right-3 text-destructive text-sm hover:underline"
-                            >
-                                Remove
-                            </button>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Project Title</label>
-                                <input
-                                    type="text"
-                                    value={entry.title || ""}
-                                    onChange={(e) => updateProject(entry.id, "title", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    placeholder="E-commerce Website"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Tech Stack</label>
-                                <input
-                                    type="text"
-                                    value={entry.techStack || ""}
-                                    onChange={(e) => updateProject(entry.id, "techStack", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    placeholder="React, Node.js, MongoDB"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Project Link (optional)</label>
-                                <input
-                                    type="text"
-                                    value={entry.link || ""}
-                                    onChange={(e) => updateProject(entry.id, "link", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    placeholder="github.com/username/project"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Description</label>
-                                <textarea
-                                    value={entry.description || ""}
-                                    onChange={(e) => updateProject(entry.id, "description", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 h-20 bg-card"
-                                    placeholder="What did you build and what problem did it solve?"
-                                />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Certifications */}
-                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex justify-between items-center gap-2">
-                        <h2 className="font-heading text-lg font-semibold text-foreground">Certifications</h2>
-                        <button onClick={addCertification} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
-                            + Add Certification
-                        </button>
-                    </div>
-
-                    {certifications.length === 0 && (
-                        <p className="text-muted-foreground text-sm">No certifications added yet.</p>
-                    )}
-
-                    {certifications.map((entry) => (
-                        <div key={entry.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
-                            <button
-                                onClick={() => removeCertification(entry.id)}
-                                className="absolute top-3 right-3 text-destructive text-sm hover:underline"
-                            >
-                                Remove
-                            </button>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Certification Name</label>
+                        {languages.map((entry) => (
+                            <div key={entry.id} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                                 <input
                                     type="text"
                                     value={entry.name || ""}
-                                    onChange={(e) => updateCertification(entry.id, "name", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    placeholder="AWS Certified Developer"
+                                    onChange={(e) => updateLanguage(entry.id, "name", e.target.value)}
+                                    className="flex-1 border border-border rounded-md px-3 py-2 bg-background"
+                                    placeholder="English"
                                 />
+                                <select
+                                    value={entry.proficiency || "Conversational"}
+                                    onChange={(e) => updateLanguage(entry.id, "proficiency", e.target.value)}
+                                    className="border border-border rounded-md px-3 py-2 bg-background"
+                                >
+                                    <option>Native</option>
+                                    <option>Fluent</option>
+                                    <option>Conversational</option>
+                                    <option>Basic</option>
+                                </select>
+                                <button
+                                    onClick={() => removeLanguage(entry.id)}
+                                    className="text-destructive text-sm hover:underline whitespace-nowrap"
+                                >
+                                    Remove
+                                </button>
                             </div>
+                        ))}
+                    </div>
+                )}
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Issuer</label>
-                                <input
-                                    type="text"
-                                    value={entry.issuer || ""}
-                                    onChange={(e) => updateCertification(entry.id, "issuer", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                    placeholder="Amazon Web Services"
-                                />
-                            </div>
+                {/* ============== STEP 8: Achievements ============== */}
+                {currentStep === 7 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <h2 className="font-heading text-lg font-semibold text-foreground">Achievements</h2>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1 text-foreground">Date</label>
-                                <input
-                                    type="month"
-                                    value={entry.date || ""}
-                                    onChange={(e) => updateCertification(entry.id, "date", e.target.value)}
-                                    className="w-full border border-border rounded-md px-3 py-2 bg-card"
-                                />
-                            </div>
+                        <input
+                            type="text"
+                            value={achievementInput}
+                            onChange={(e) => setAchievementInput(e.target.value)}
+                            onKeyDown={handleAchievementKeyDown}
+                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                            placeholder="Type an achievement and press Enter (e.g. Winner - Smart India Hackathon 2025)"
+                        />
+
+                        <div className="space-y-1">
+                            {achievements.map((item, index) => (
+                                <div key={index} className="flex justify-between items-center text-sm bg-muted rounded-md px-3 py-2">
+                                    <span className="text-foreground">{item}</span>
+                                    <button onClick={() => removeAchievement(index)} className="text-destructive hover:opacity-70">
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
+                    </div>
+                )}
 
-                {/* Languages */}
-                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <div className="flex justify-between items-center gap-2">
-                        <h2 className="font-heading text-lg font-semibold text-foreground">Languages</h2>
-                        <button onClick={addLanguage} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
-                            + Add Language
+                {/* ============== STEP 9: Skills ============== */}
+                {currentStep === 8 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <h2 className="font-heading text-lg font-semibold text-foreground">Skills</h2>
+
+                        <input
+                            type="text"
+                            value={skillInput}
+                            onChange={(e) => setSkillInput(e.target.value)}
+                            onKeyDown={handleSkillKeyDown}
+                            className="w-full border border-border rounded-md px-3 py-2 bg-background"
+                            placeholder="Type a skill and press Enter (e.g. React)"
+                        />
+
+                        <div className="flex flex-wrap gap-2">
+                            {skills.map((skill) => (
+                                <span
+                                    key={skill}
+                                    className="bg-muted border border-border rounded-full px-3 py-1 text-sm flex items-center gap-2 text-foreground"
+                                >
+                                    {skill}
+                                    <button onClick={() => removeSkill(skill)} className="text-destructive hover:opacity-70">
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ============== WIZARD NAV: Back / Next ============== */}
+                <div className="flex items-center justify-between gap-3 mb-6">
+                    <button
+                        onClick={goBack}
+                        disabled={currentStep === 0}
+                        className="px-4 py-2.5 rounded-md text-sm font-medium border border-border bg-card hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                        ← Back
+                    </button>
+
+                    {!isLastStep ? (
+                        <button
+                            onClick={goNext}
+                            className="px-4 py-2.5 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:opacity-90 whitespace-nowrap"
+                        >
+                            Next →
                         </button>
-                    </div>
-
-                    {languages.length === 0 && (
-                        <p className="text-muted-foreground text-sm">No languages added yet.</p>
+                    ) : (
+                        <span className="text-xs sm:text-sm text-muted-foreground text-right">
+                            Last section — Save your resume below ↓
+                        </span>
                     )}
-
-                    {languages.map((entry) => (
-                        <div key={entry.id} className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-                            <input
-                                type="text"
-                                value={entry.name || ""}
-                                onChange={(e) => updateLanguage(entry.id, "name", e.target.value)}
-                                className="flex-1 border border-border rounded-md px-3 py-2 bg-background"
-                                placeholder="English"
-                            />
-                            <select
-                                value={entry.proficiency || "Conversational"}
-                                onChange={(e) => updateLanguage(entry.id, "proficiency", e.target.value)}
-                                className="border border-border rounded-md px-3 py-2 bg-background"
-                            >
-                                <option>Native</option>
-                                <option>Fluent</option>
-                                <option>Conversational</option>
-                                <option>Basic</option>
-                            </select>
-                            <button
-                                onClick={() => removeLanguage(entry.id)}
-                                className="text-destructive text-sm hover:underline whitespace-nowrap"
-                            >
-                                Remove
-                            </button>
-                        </div>
-                    ))}
                 </div>
 
-                {/* Achievements */}
-                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <h2 className="font-heading text-lg font-semibold text-foreground">Achievements</h2>
-
-                    <input
-                        type="text"
-                        value={achievementInput}
-                        onChange={(e) => setAchievementInput(e.target.value)}
-                        onKeyDown={handleAchievementKeyDown}
-                        className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                        placeholder="Type an achievement and press Enter (e.g. Winner - Smart India Hackathon 2025)"
-                    />
-
-                    <div className="space-y-1">
-                        {achievements.map((item, index) => (
-                            <div key={index} className="flex justify-between items-center text-sm bg-muted rounded-md px-3 py-2">
-                                <span className="text-foreground">{item}</span>
-                                <button onClick={() => removeAchievement(index)} className="text-destructive hover:opacity-70">
-                                    ×
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Skills */}
-                <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                    <h2 className="font-heading text-lg font-semibold text-foreground">Skills</h2>
-
-                    <input
-                        type="text"
-                        value={skillInput}
-                        onChange={(e) => setSkillInput(e.target.value)}
-                        onKeyDown={handleSkillKeyDown}
-                        className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                        placeholder="Type a skill and press Enter (e.g. React)"
-                    />
-
-                    <div className="flex flex-wrap gap-2">
-                        {skills.map((skill) => (
-                            <span
-                                key={skill}
-                                className="bg-muted border border-border rounded-full px-3 py-1 text-sm flex items-center gap-2 text-foreground"
-                            >
-                                {skill}
-                                <button onClick={() => removeSkill(skill)} className="text-destructive hover:opacity-70">
-                                    ×
-                                </button>
-                            </span>
-                        ))}
-                    </div>
-                </div>
-
+                {/* Save / Download — always visible regardless of step */}
                 <div className="flex flex-col sm:flex-row gap-3">
                     <button
                         onClick={handleSave}
