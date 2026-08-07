@@ -25,6 +25,19 @@ export class ResumesService {
         });
     }
 
+    // Used by the "Upload My Resume" (AI import) flow — same as create(),
+    // but takes the already-parsed content instead of starting empty.
+    async createFromImport(clerkId: string, title: string, content: any) {
+        const user = await this.getInternalUser(clerkId);
+        return this.prisma.resume.create({
+            data: {
+                userId: user.id,
+                title,
+                content,
+            },
+        });
+    }
+
     async findAll(clerkId: string) {
         const user = await this.getInternalUser(clerkId);
         return this.prisma.resume.findMany({

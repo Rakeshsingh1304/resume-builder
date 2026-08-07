@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, API_URL } from "@/lib/api";
 import { FilePlus2, UploadCloud, X, ArrowLeft, Loader2, FileText } from "lucide-react";
 
 type Step = "choose" | "manual" | "upload";
@@ -69,25 +69,21 @@ export default function NewResumeModal({ isOpen, onClose, onCreated }: NewResume
         try {
             const token = await getToken();
 
-            // NOTE: This calls a backend endpoint that needs to be built:
-            // POST /api/resumes/import  (multipart/form-data, field name "file")
-            // It should: extract text from the PDF/DOCX, send it to Gemini to
-            // structure it into the Resume.content JSON shape, then create
-            // and return a new Resume record.
             const formData = new FormData();
             formData.append("file", uploadFile);
 
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/resumes/import`,
-                {
-                    method: "POST",
-                    headers: { Authorization: `Bearer ${token}` },
-                    body: formData,
-                }
-            );
+            const res = await fetch(`${API_URL}/api/resumes/import`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
+            });
 
             if (!res.ok) {
-                throw new Error("Could not read your resume. Please try again or fill it manually.");
+                const error = await res.json().catch(() => ({}));
+                throw new Error(
+                    error.message ||
+                    "Could not read your resume. Please try again or fill it manually."
+                );
             }
 
             const created = await res.json();
@@ -228,7 +224,7 @@ export default function NewResumeModal({ isOpen, onClose, onCreated }: NewResume
                                 </span>
                                 <input
                                     type="file"
-                                    accept=".pdf,.doc,.docx"
+                                    accept=".pdf,.docx"
                                     className="hidden"
                                     onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
                                 />
