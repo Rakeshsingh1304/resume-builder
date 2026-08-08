@@ -86,12 +86,12 @@ interface AtsBreakdownItem {
 }
 
 // ---- Wizard steps configuration ----
-// Order of the fill-in-the-form sections. ATS Score & Public Sharing are
-// shown separately above the wizard since they are actions/tools, not
-// data-entry steps.
+// Summary is LAST on purpose: by the time the user reaches it, all their
+// other data is filled in, so the "Generate with AI" button can use
+// everything (experience, education, projects, skills, achievements) to
+// write a much better summary.
 const STEPS = [
     { key: "personal", label: "Personal Info" },
-    { key: "summary", label: "Summary" },
     { key: "experience", label: "Experience" },
     { key: "education", label: "Education" },
     { key: "projects", label: "Projects" },
@@ -99,6 +99,7 @@ const STEPS = [
     { key: "languages", label: "Languages" },
     { key: "achievements", label: "Achievements" },
     { key: "skills", label: "Skills" },
+    { key: "summary", label: "Summary" },
 ] as const;
 
 export default function ResumeBuilderPage() {
@@ -119,6 +120,8 @@ export default function ResumeBuilderPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [generatingSummary, setGeneratingSummary] = useState(false);
+    const [generatingExperienceId, setGeneratingExperienceId] = useState<string | null>(null);
+    const [generatingProjectId, setGeneratingProjectId] = useState<string | null>(null);
     const [atsScore, setAtsScore] = useState<number | null>(null);
     const [atsBreakdown, setAtsBreakdown] = useState<AtsBreakdownItem[]>([]);
     const [checkingAts, setCheckingAts] = useState(false);
@@ -128,9 +131,6 @@ export default function ResumeBuilderPage() {
     const formTopRef = useRef<HTMLDivElement | null>(null);
     const isFirstRender = useRef(true);
 
-    // Scroll the form back to the top of the current step whenever the
-    // step changes (Next / Back / clicking a step tab), but not on the
-    // very first render (page load).
     useEffect(() => {
         if (isFirstRender.current) {
             isFirstRender.current = false;
@@ -310,19 +310,29 @@ export default function ResumeBuilderPage() {
     }
 
     async function handleGenerateSummary() {
-        if (experience.length === 0) {
-            alert("Please add at least one work experience first, so AI has context to generate a summary.");
+        const hasAnyData =
+            (personalInfo.title && personalInfo.title.trim().length > 0) ||
+            experience.length > 0 ||
+            skills.length > 0 ||
+            projects.length > 0;
+
+        if (!hasAnyData) {
+            alert("Please fill in your title, experience, projects, or skills first, so AI has something to work with.");
             return;
         }
+
         setGeneratingSummary(true);
         const token = await getToken();
         try {
             const data = await apiFetch("/api/ai/generate-summary", token, {
                 method: "POST",
                 body: JSON.stringify({
-                    jobTitle: experience[0].role || "Professional",
-                    yearsOfExperience: experience.length,
-                    keySkills: skills,
+                    personalInfo,
+                    experience,
+                    education,
+                    skills,
+                    projects,
+                    achievements,
                 }),
             });
             setSummary(data.summary);
@@ -330,6 +340,57 @@ export default function ResumeBuilderPage() {
             alert(err.message || "Failed to generate summary. Please try again.");
         } finally {
             setGeneratingSummary(false);
+        }
+    }
+
+    async function handleGenerateExperienceDescription(entry: ExperienceEntry) {
+        if (!entry.company || !entry.role) {
+            alert("Please fill in the Company and Job Title first, so AI has context to write a description.");
+            return;
+        }
+
+        setGeneratingExperienceId(entry.id);
+        const token = await getToken();
+        try {
+            const data = await apiFetch("/api/ai/generate-experience-description", token, {
+                method: "POST",
+                body: JSON.stringify({
+                    company: entry.company,
+                    role: entry.role,
+                    startDate: entry.startDate,
+                    endDate: entry.endDate,
+                    currentlyWorking: entry.currentlyWorking,
+                }),
+            });
+            updateExperience(entry.id, "description", data.description);
+        } catch (err: any) {
+            alert(err.message || "Failed to generate description. Please try again.");
+        } finally {
+            setGeneratingExperienceId(null);
+        }
+    }
+
+    async function handleGenerateProjectDescription(entry: ProjectEntry) {
+        if (!entry.title) {
+            alert("Please fill in the Project Title first, so AI has context to write a description.");
+            return;
+        }
+
+        setGeneratingProjectId(entry.id);
+        const token = await getToken();
+        try {
+            const data = await apiFetch("/api/ai/generate-project-description", token, {
+                method: "POST",
+                body: JSON.stringify({
+                    title: entry.title,
+                    techStack: entry.techStack,
+                }),
+            });
+            updateProject(entry.id, "description", data.description);
+        } catch (err: any) {
+            alert(err.message || "Failed to generate description. Please try again.");
+        } finally {
+            setGeneratingProjectId(null);
         }
     }
 
@@ -466,7 +527,6 @@ export default function ResumeBuilderPage() {
                         />
                     </div>
 
-                    {/* Step tabs — horizontally scrollable so it fits on mobile */}
                     <div className="flex gap-2 mt-3 overflow-x-auto pb-1 -mx-1 px-1">
                         {STEPS.map((step, idx) => (
                             <button
@@ -485,7 +545,7 @@ export default function ResumeBuilderPage() {
                     </div>
                 </div>
 
-                {/* ============== STEP 1: Personal Info ============== */}
+                {/* ============== STEP: Personal Info ============== */}
                 {currentStep === 0 && (
                     <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                         <h2 className="font-heading text-lg font-semibold text-foreground">Personal Information</h2>
@@ -575,30 +635,8 @@ export default function ResumeBuilderPage() {
                     </div>
                 )}
 
-                {/* ============== STEP 2: Summary ============== */}
+                {/* ============== STEP: Experience ============== */}
                 {currentStep === 1 && (
-                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-                            <h2 className="font-heading text-lg font-semibold text-foreground">Professional Summary</h2>
-                            <button
-                                onClick={handleGenerateSummary}
-                                disabled={generatingSummary}
-                                className="text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 whitespace-nowrap w-full sm:w-auto"
-                            >
-                                {generatingSummary ? "Generating..." : "✨ Generate with AI"}
-                            </button>
-                        </div>
-                        <textarea
-                            value={summary}
-                            onChange={(e) => setSummary(e.target.value)}
-                            className="w-full border border-border rounded-md px-3 py-2 h-28 bg-background"
-                            placeholder="A brief 2-3 sentence summary highlighting your key strengths and career goals..."
-                        />
-                    </div>
-                )}
-
-                {/* ============== STEP 3: Experience ============== */}
-                {currentStep === 2 && (
                     <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                         <div className="flex justify-between items-center gap-2">
                             <h2 className="font-heading text-lg font-semibold text-foreground">Work Experience</h2>
@@ -674,7 +712,16 @@ export default function ResumeBuilderPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-foreground">Description</label>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-medium text-foreground">Description</label>
+                                        <button
+                                            onClick={() => handleGenerateExperienceDescription(entry)}
+                                            disabled={generatingExperienceId === entry.id}
+                                            className="text-xs bg-primary text-primary-foreground px-2.5 py-1 rounded-md hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+                                        >
+                                            {generatingExperienceId === entry.id ? "Generating..." : "✨ Generate with AI"}
+                                        </button>
+                                    </div>
                                     <textarea
                                         value={entry.description || ""}
                                         onChange={(e) => updateExperience(entry.id, "description", e.target.value)}
@@ -687,8 +734,8 @@ export default function ResumeBuilderPage() {
                     </div>
                 )}
 
-                {/* ============== STEP 4: Education ============== */}
-                {currentStep === 3 && (
+                {/* ============== STEP: Education ============== */}
+                {currentStep === 2 && (
                     <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                         <div className="flex justify-between items-center gap-2">
                             <h2 className="font-heading text-lg font-semibold text-foreground">Education</h2>
@@ -768,8 +815,8 @@ export default function ResumeBuilderPage() {
                     </div>
                 )}
 
-                {/* ============== STEP 5: Projects ============== */}
-                {currentStep === 4 && (
+                {/* ============== STEP: Projects ============== */}
+                {currentStep === 3 && (
                     <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                         <div className="flex justify-between items-center gap-2">
                             <h2 className="font-heading text-lg font-semibold text-foreground">Projects</h2>
@@ -825,7 +872,16 @@ export default function ResumeBuilderPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-1 text-foreground">Description</label>
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-medium text-foreground">Description</label>
+                                        <button
+                                            onClick={() => handleGenerateProjectDescription(entry)}
+                                            disabled={generatingProjectId === entry.id}
+                                            className="text-xs bg-primary text-primary-foreground px-2.5 py-1 rounded-md hover:opacity-90 disabled:opacity-50 whitespace-nowrap"
+                                        >
+                                            {generatingProjectId === entry.id ? "Generating..." : "✨ Generate with AI"}
+                                        </button>
+                                    </div>
                                     <textarea
                                         value={entry.description || ""}
                                         onChange={(e) => updateProject(entry.id, "description", e.target.value)}
@@ -838,8 +894,8 @@ export default function ResumeBuilderPage() {
                     </div>
                 )}
 
-                {/* ============== STEP 6: Certifications ============== */}
-                {currentStep === 5 && (
+                {/* ============== STEP: Certifications ============== */}
+                {currentStep === 4 && (
                     <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                         <div className="flex justify-between items-center gap-2">
                             <h2 className="font-heading text-lg font-semibold text-foreground">Certifications</h2>
@@ -897,8 +953,8 @@ export default function ResumeBuilderPage() {
                     </div>
                 )}
 
-                {/* ============== STEP 7: Languages ============== */}
-                {currentStep === 6 && (
+                {/* ============== STEP: Languages ============== */}
+                {currentStep === 5 && (
                     <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                         <div className="flex justify-between items-center gap-2">
                             <h2 className="font-heading text-lg font-semibold text-foreground">Languages</h2>
@@ -941,8 +997,8 @@ export default function ResumeBuilderPage() {
                     </div>
                 )}
 
-                {/* ============== STEP 8: Achievements ============== */}
-                {currentStep === 7 && (
+                {/* ============== STEP: Achievements ============== */}
+                {currentStep === 6 && (
                     <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                         <h2 className="font-heading text-lg font-semibold text-foreground">Achievements</h2>
 
@@ -968,8 +1024,8 @@ export default function ResumeBuilderPage() {
                     </div>
                 )}
 
-                {/* ============== STEP 9: Skills ============== */}
-                {currentStep === 8 && (
+                {/* ============== STEP: Skills ============== */}
+                {currentStep === 7 && (
                     <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                         <h2 className="font-heading text-lg font-semibold text-foreground">Skills</h2>
 
@@ -995,6 +1051,33 @@ export default function ResumeBuilderPage() {
                                 </span>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {/* ============== STEP: Summary (LAST) ============== */}
+                {currentStep === 8 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                            <div>
+                                <h2 className="font-heading text-lg font-semibold text-foreground">Professional Summary</h2>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                    Since you've filled everything else, AI can now write a summary based on your whole resume.
+                                </p>
+                            </div>
+                            <button
+                                onClick={handleGenerateSummary}
+                                disabled={generatingSummary}
+                                className="text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 whitespace-nowrap w-full sm:w-auto"
+                            >
+                                {generatingSummary ? "Generating..." : "✨ Generate with AI"}
+                            </button>
+                        </div>
+                        <textarea
+                            value={summary}
+                            onChange={(e) => setSummary(e.target.value)}
+                            className="w-full border border-border rounded-md px-3 py-2 h-28 bg-background"
+                            placeholder="A brief 2-3 sentence summary highlighting your key strengths and career goals..."
+                        />
                     </div>
                 )}
 
@@ -1032,7 +1115,7 @@ export default function ResumeBuilderPage() {
                         {saving ? "Saving..." : "Save"}
                     </button>
                     <button
-                        onClick={() => window.open(`/resumes/${id}/print`, "_blank")}
+                        onClick={() => window.open(`/print/${id}`, "_blank")}
                         className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:bg-muted whitespace-nowrap"
                     >
                         📄 Download PDF

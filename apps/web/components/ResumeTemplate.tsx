@@ -63,6 +63,15 @@ interface ResumeTemplateProps {
     achievements?: string[];
 }
 
+// Applied to anything that should NEVER be split across two printed pages
+// (a whole short section, or a single entry inside a longer section).
+const avoidBreak: React.CSSProperties = {
+    breakInside: "avoid",
+    // @ts-ignore -- older browsers look for the vendor/legacy property name
+    WebkitColumnBreakInside: "avoid",
+    pageBreakInside: "avoid",
+};
+
 function formatDate(dateStr?: string) {
     if (!dateStr) return "";
     const [year, month] = dateStr.split("-");
@@ -102,7 +111,7 @@ export default function ResumeTemplate({
             style={{ width: "794px", minHeight: "1123px", fontFamily: "Arial, sans-serif" }}
         >
             {/* Header */}
-            <div className="mb-6">
+            <div className="mb-6" style={avoidBreak}>
                 <h1 className="text-[32px] font-bold tracking-tight text-[#14213D]">
                     {personalInfo.fullName || "Your Name"}
                 </h1>
@@ -154,21 +163,23 @@ export default function ResumeTemplate({
                 <div className="border-b-2 border-[#14213D] mt-4" />
             </div>
 
-            {/* Summary */}
+            {/* Summary — short section, keep heading + text together */}
             {summary && (
-                <div>
+                <div style={avoidBreak}>
                     <SectionHeading>Professional Summary</SectionHeading>
                     <p className="text-[13px] leading-relaxed text-gray-800">{summary}</p>
                     <SectionDivider />
                 </div>
             )}
 
-            {/* Experience */}
+            {/* Experience — can be long, so only individual entries are
+                protected from splitting (the section itself can flow
+                across pages if there are many entries) */}
             {experience.length > 0 && (
                 <div>
                     <SectionHeading>Experience</SectionHeading>
                     {experience.map((exp) => (
-                        <div key={exp.id} className="mb-3.5 last:mb-0">
+                        <div key={exp.id} className="mb-3.5 last:mb-0" style={avoidBreak}>
                             <div className="flex justify-between items-baseline">
                                 <p className="font-bold text-[14px] text-[#14213D]">{exp.role}</p>
                                 <p className="text-[12px] text-gray-500 whitespace-nowrap ml-3">
@@ -183,12 +194,12 @@ export default function ResumeTemplate({
                 </div>
             )}
 
-            {/* Projects */}
+            {/* Projects — same approach as Experience */}
             {projects.length > 0 && (
                 <div>
                     <SectionHeading>Projects</SectionHeading>
                     {projects.map((proj) => (
-                        <div key={proj.id} className="mb-3.5 last:mb-0">
+                        <div key={proj.id} className="mb-3.5 last:mb-0" style={avoidBreak}>
                             <div className="flex justify-between items-baseline">
                                 <p className="font-bold text-[14px] text-[#14213D]">{proj.title}</p>
                                 {proj.link && <p className="text-[12px] text-[#E3A008] whitespace-nowrap ml-3">{proj.link}</p>}
@@ -203,12 +214,13 @@ export default function ResumeTemplate({
                 </div>
             )}
 
-            {/* Education */}
+            {/* Education — usually short, keep whole section together;
+                each entry is also protected individually as a backup */}
             {education.length > 0 && (
-                <div>
+                <div style={avoidBreak}>
                     <SectionHeading>Education</SectionHeading>
                     {education.map((edu) => (
-                        <div key={edu.id} className="mb-2.5 last:mb-0">
+                        <div key={edu.id} className="mb-2.5 last:mb-0" style={avoidBreak}>
                             <div className="flex justify-between items-baseline">
                                 <p className="font-bold text-[14px] text-[#14213D]">
                                     {edu.degree}{edu.fieldOfStudy ? `, ${edu.fieldOfStudy}` : ""}
@@ -224,12 +236,17 @@ export default function ResumeTemplate({
                 </div>
             )}
 
-            {/* Certifications */}
+            {/* Certifications — this is the section from your screenshot;
+                keeping the whole block together fixes the orphaned heading */}
             {certifications.length > 0 && (
-                <div>
+                <div style={avoidBreak}>
                     <SectionHeading>Certifications</SectionHeading>
                     {certifications.map((cert) => (
-                        <div key={cert.id} className="flex justify-between items-baseline mb-1 last:mb-0">
+                        <div
+                            key={cert.id}
+                            className="flex justify-between items-baseline mb-1 last:mb-0"
+                            style={avoidBreak}
+                        >
                             <p className="text-[13px] text-gray-800">
                                 <span className="font-semibold text-[#14213D]">{cert.name}</span>
                                 {cert.issuer && <span className="text-gray-600"> — {cert.issuer}</span>}
@@ -243,7 +260,7 @@ export default function ResumeTemplate({
 
             {/* Skills */}
             {skills.length > 0 && (
-                <div>
+                <div style={avoidBreak}>
                     <SectionHeading>Skills</SectionHeading>
                     <div className="flex flex-wrap gap-2">
                         {skills.map((skill) => (
@@ -261,7 +278,7 @@ export default function ResumeTemplate({
 
             {/* Languages */}
             {languages.length > 0 && (
-                <div>
+                <div style={avoidBreak}>
                     <SectionHeading>Languages</SectionHeading>
                     <div className="flex flex-wrap gap-x-6 gap-y-1 text-[13px] text-gray-800">
                         {languages.map((lang) => (
@@ -277,11 +294,11 @@ export default function ResumeTemplate({
 
             {/* Achievements */}
             {achievements.length > 0 && (
-                <div>
+                <div style={avoidBreak}>
                     <SectionHeading>Achievements</SectionHeading>
                     <ul className="text-[13px] text-gray-800 space-y-1">
                         {achievements.map((item, index) => (
-                            <li key={index} className="flex gap-2">
+                            <li key={index} className="flex gap-2" style={avoidBreak}>
                                 <span className="text-[#E3A008] font-bold">•</span> {item}
                             </li>
                         ))}

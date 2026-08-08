@@ -51,6 +51,7 @@ enum AIFeature {
   ATS_CHECK
   COVER_LETTER_GEN
   RESUME_IMPORT
+  PROJECT_GEN
 }
 
 model AICreditUsage {

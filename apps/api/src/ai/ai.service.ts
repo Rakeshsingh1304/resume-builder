@@ -1,11 +1,19 @@
 import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { AIFeature } from '@prisma/client';
 import { GeminiProvider } from './providers/gemini.provider';
 import { PrismaService } from '../prisma/prisma.service';
 
 const FREE_MONTHLY_LIMIT = 10;
 
-type AiFeature = 'SUMMARY_GEN' | 'EXPERIENCE_GEN' | 'ATS_CHECK' | 'COVER_LETTER_GEN' | 'RESUME_IMPORT';
+interface SummaryContext {
+    personalInfo?: { title?: string;[key: string]: any };
+    experience?: any[];
+    education?: any[];
+    skills?: string[];
+    projects?: any[];
+    achievements?: string[];
+}
 
 @Injectable()
 export class AiService {
@@ -45,23 +53,113 @@ export class AiService {
 
     // Sirf RECORD karta hai ki ek credit use hui — AI call SUCCESSFUL hone ke
     // BAAD hi call karna hai, taaki failed/retried attempts credit na khaayein.
-    private async recordUsage(userId: string, feature: AiFeature) {
+    private async recordUsage(userId: string, feature: AIFeature) {
         await this.prisma.aICreditUsage.create({
             data: { userId, featureUsed: feature },
         });
     }
 
-    async generateSummary(clerkId: string, jobTitle: string, yearsOfExperience: number, keySkills: string[]) {
+    /**
+     * Generates a professional summary using EVERYTHING the user has filled
+     * in so far (title, experience, education, projects, skills,
+     * achievements) — meant to be called as the LAST step of the wizard,
+     * once the rest of the resume is complete.
+     */
+    async generateSummary(clerkId: string, content: SummaryContext) {
         const user = await this.checkLimit(clerkId);
 
-        const prompt = `Write a professional 2-3 sentence resume summary for a ${jobTitle} with ${yearsOfExperience} years of experience. Key skills: ${keySkills.join(', ')}. Keep it concise, achievement-oriented, and in third person implied (no "I" statements). Return only the summary text, no extra commentary.`;
+        const {
+            personalInfo = {},
+            experience = [],
+            education = [],
+            skills = [],
+            projects = [],
+            achievements = [],
+        } = content;
+
+        const experienceText =
+            experience
+                .map((e: any) => `- ${e.role || 'Role'} at ${e.company || 'Company'}: ${e.description || 'No description provided'}`)
+                .join('\n') || 'None provided';
+
+        const educationText =
+            education
+                .map((e: any) => `- ${e.degree || ''} in ${e.fieldOfStudy || ''} from ${e.institution || ''}`)
+                .join('\n') || 'None provided';
+
+        const projectsText =
+            projects
+                .map((p: any) => `- ${p.title || 'Project'} (${p.techStack || 'N/A'}): ${p.description || 'No description provided'}`)
+                .join('\n') || 'None provided';
+
+        const prompt = `Write a professional 2-3 sentence resume summary for the candidate described below. Use ONLY the information given — do not invent facts, companies, or numbers that aren't mentioned. Keep it concise, achievement-oriented, and in third person implied (no "I" statements). Return only the summary text, no extra commentary.
+
+Title/Role: ${personalInfo.title || 'Not specified'}
+
+Work Experience:
+${experienceText}
+
+Education:
+${educationText}
+
+Projects:
+${projectsText}
+
+Skills: ${skills.length > 0 ? skills.join(', ') : 'None provided'}
+
+Achievements: ${achievements.length > 0 ? achievements.join(', ') : 'None provided'}`;
 
         const summary = await this.geminiProvider.generateText(prompt);
-
-        // Yahan tak pahunch gaye matlab call successful thi — ab credit record karo
         await this.recordUsage(user.id, 'SUMMARY_GEN');
-
         return summary;
+    }
+
+    /**
+     * Generates a bullet-style description for ONE work experience entry,
+     * using the company, role, and dates as context. Used by the
+     * "✨ Generate with AI" button next to each experience entry.
+     */
+    async generateExperienceDescription(
+        clerkId: string,
+        company: string,
+        role: string,
+        startDate?: string,
+        endDate?: string,
+        currentlyWorking?: boolean,
+    ) {
+        const user = await this.checkLimit(clerkId);
+
+        const duration = currentlyWorking
+            ? `${startDate || 'unknown start'} to Present`
+            : `${startDate || 'unknown start'} to ${endDate || 'unknown end'}`;
+
+        const prompt = `Write 3 concise, achievement-oriented resume bullet points for the following work experience. Each bullet should start with a strong action verb, and should describe realistic, plausible responsibilities and impact for this role — do not invent specific numbers or company names beyond what's given. Separate bullets with a newline character. Do not use markdown bullet symbols (no "-" or "*"), just plain lines of text. Return ONLY the bullet points, no extra commentary.
+
+Role: ${role}
+Company: ${company}
+Duration: ${duration}`;
+
+        const description = await this.geminiProvider.generateText(prompt);
+        await this.recordUsage(user.id, 'EXPERIENCE_GEN');
+        return description.trim();
+    }
+
+    /**
+     * Generates a description for ONE project entry, using the project
+     * title and tech stack as context. Used by the "✨ Generate with AI"
+     * button next to each project entry.
+     */
+    async generateProjectDescription(clerkId: string, title: string, techStack?: string) {
+        const user = await this.checkLimit(clerkId);
+
+        const prompt = `Write a concise, achievement-oriented 2-3 sentence description for a resume project entry. Focus on what the project does, the problem it solves, and the candidate's role in building it. Do not invent specific metrics or claims beyond what's implied by the title and tech stack. Return ONLY the description text, no extra commentary, no markdown.
+
+Project Title: ${title}
+Tech Stack: ${techStack || 'Not specified'}`;
+
+        const description = await this.geminiProvider.generateText(prompt);
+        await this.recordUsage(user.id, 'PROJECT_GEN');
+        return description.trim();
     }
 
     /**

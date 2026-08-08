@@ -10,14 +10,53 @@ export class AiController {
     @Post('generate-summary')
     async generateSummary(
         @Req() req: any,
-        @Body() body: { jobTitle: string; yearsOfExperience: number; keySkills: string[] },
+        @Body()
+        body: {
+            personalInfo?: any;
+            experience?: any[];
+            education?: any[];
+            skills?: string[];
+            projects?: any[];
+            achievements?: string[];
+        },
     ) {
-        const summary = await this.aiService.generateSummary(
-            req.auth.userId,
-            body.jobTitle,
-            body.yearsOfExperience,
-            body.keySkills,
-        );
+        const summary = await this.aiService.generateSummary(req.auth.userId, body);
         return { summary };
+    }
+
+    @Post('generate-experience-description')
+    async generateExperienceDescription(
+        @Req() req: any,
+        @Body()
+        body: {
+            company: string;
+            role: string;
+            startDate?: string;
+            endDate?: string;
+            currentlyWorking?: boolean;
+        },
+    ) {
+        const description = await this.aiService.generateExperienceDescription(
+            req.auth.userId,
+            body.company,
+            body.role,
+            body.startDate,
+            body.endDate,
+            body.currentlyWorking,
+        );
+        return { description };
+    }
+
+    @Post('generate-project-description')
+    async generateProjectDescription(
+        @Req() req: any,
+        @Body() body: { title: string; techStack?: string },
+    ) {
+        const description = await this.aiService.generateProjectDescription(
+            req.auth.userId,
+            body.title,
+            body.techStack,
+        );
+        return { description };
     }
 }
