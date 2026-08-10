@@ -125,6 +125,21 @@ export default function ResumeBuilderPage() {
     const [atsScore, setAtsScore] = useState<number | null>(null);
     const [atsBreakdown, setAtsBreakdown] = useState<AtsBreakdownItem[]>([]);
     const [checkingAts, setCheckingAts] = useState(false);
+    const [jobDescription, setJobDescription] = useState("");
+    const [checkingJobMatch, setCheckingJobMatch] = useState(false);
+    const [jobMatchResult, setJobMatchResult] = useState<{
+        matchPercentage: number;
+        matchedKeywords: string[];
+        missingKeywords: string[];
+        suggestions: string;
+    } | null>(null);
+    const [checkingWritingQuality, setCheckingWritingQuality] = useState(false);
+    const [writingQualityResult, setWritingQualityResult] = useState<{
+        overallQuality: string;
+        strengths: string[];
+        improvements: string[];
+    } | null>(null);
+    const [applyingImprovements, setApplyingImprovements] = useState(false);
 
     // ---- Wizard state ----
     const [currentStep, setCurrentStep] = useState(0);
@@ -413,6 +428,86 @@ export default function ResumeBuilderPage() {
         }
     }
 
+    async function handleCheckJobMatch() {
+        if (!jobDescription.trim()) {
+            alert("Please paste a job description first.");
+            return;
+        }
+        setCheckingJobMatch(true);
+        const token = await getToken();
+        try {
+            const data = await apiFetch(`/api/resumes/${id}/job-match`, token, {
+                method: "POST",
+                body: JSON.stringify({ jobDescription }),
+            });
+            setJobMatchResult(data);
+        } catch (err: any) {
+            alert(err.message || "Failed to check job match. Please try again.");
+        } finally {
+            setCheckingJobMatch(false);
+        }
+    }
+
+    async function handleCheckWritingQuality() {
+        setCheckingWritingQuality(true);
+        const token = await getToken();
+        try {
+            const data = await apiFetch(`/api/resumes/${id}/writing-quality`, token, {
+                method: "POST",
+            });
+            setWritingQualityResult(data);
+        } catch (err: any) {
+            alert(err.message || "Failed to analyze writing quality. Please try again.");
+        } finally {
+            setCheckingWritingQuality(false);
+        }
+    }
+
+    async function handleApplyImprovements() {
+        if (!writingQualityResult || writingQualityResult.improvements.length === 0) return;
+
+        const confirmed = window.confirm(
+            "This will rewrite your Summary and Experience/Project descriptions using AI to address the suggestions above. Your current text will be replaced. Continue?"
+        );
+        if (!confirmed) return;
+
+        setApplyingImprovements(true);
+        const token = await getToken();
+        try {
+            const data = await apiFetch("/api/ai/improve-resume", token, {
+                method: "POST",
+                body: JSON.stringify({
+                    summary,
+                    experience,
+                    projects,
+                    improvements: writingQualityResult.improvements,
+                }),
+            });
+
+            setSummary(data.summary);
+
+            setExperience((prev) =>
+                prev.map((entry, i) => {
+                    const match = data.experience.find((e: any) => e.index === i);
+                    return match ? { ...entry, description: match.description } : entry;
+                })
+            );
+
+            setProjects((prev) =>
+                prev.map((entry, i) => {
+                    const match = data.projects.find((p: any) => p.index === i);
+                    return match ? { ...entry, description: match.description } : entry;
+                })
+            );
+
+            alert("Your resume has been updated! Review the changes, then click Save.");
+        } catch (err: any) {
+            alert(err.message || "Failed to apply improvements. Please try again.");
+        } finally {
+            setApplyingImprovements(false);
+        }
+    }
+
     async function handleTogglePublic() {
         const token = await getToken();
         const updated = await apiFetch(`/api/resumes/${id}/toggle-public`, token, { method: "POST" });
@@ -469,6 +564,150 @@ export default function ResumeBuilderPage() {
                             </div>
                         </div>
                     )}
+
+                    {/* Job Description Matching */}
+                    <div className="mt-5 pt-5 border-t border-border">
+                        <h3 className="font-heading text-sm font-semibold text-foreground mb-2">
+                            🎯 Match Against a Job Description (optional)
+                        </h3>
+                        <textarea
+                            value={jobDescription}
+                            onChange={(e) => setJobDescription(e.target.value)}
+                            className="w-full border border-border rounded-md px-3 py-2 h-24 bg-background text-sm"
+                            placeholder="Paste the job description you're applying for..."
+                        />
+                        <button
+                            onClick={handleCheckJobMatch}
+                            disabled={checkingJobMatch}
+                            className="mt-2 text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 w-full sm:w-auto whitespace-nowrap"
+                        >
+                            {checkingJobMatch ? "Analyzing..." : "Check Job Match"}
+                        </button>
+
+                        {jobMatchResult && (
+                            <div className="mt-4">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="font-heading text-2xl font-bold text-foreground">
+                                        {jobMatchResult.matchPercentage}%
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">match with this job</div>
+                                </div>
+
+                                {jobMatchResult.matchedKeywords.length > 0 && (
+                                    <div className="mb-3">
+                                        <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                                            ✅ Found in your resume
+                                        </p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {jobMatchResult.matchedKeywords.map((kw) => (
+                                                <span
+                                                    key={kw}
+                                                    className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full"
+                                                >
+                                                    {kw}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {jobMatchResult.missingKeywords.filter((kw) => !skills.includes(kw)).length > 0 && (
+                                    <div className="mb-3">
+                                        <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                                            ⚠️ Missing — click to add to your Skills
+                                        </p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {jobMatchResult.missingKeywords
+                                                .filter((kw) => !skills.includes(kw))
+                                                .map((kw) => (
+                                                    <button
+                                                        key={kw}
+                                                        onClick={() => setSkills((prev) => [...prev, kw])}
+                                                        title="Click to add to Skills"
+                                                        className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full hover:bg-amber-200 transition"
+                                                    >
+                                                        + {kw}
+                                                    </button>
+                                                ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {jobMatchResult.suggestions && (
+                                    <p className="text-xs text-muted-foreground mt-2">{jobMatchResult.suggestions}</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Writing Quality Check */}
+                    <div className="mt-5 pt-5 border-t border-border">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-1">
+                            <h3 className="font-heading text-sm font-semibold text-foreground">
+                                🔍 Writing Quality Check
+                            </h3>
+                            <button
+                                onClick={handleCheckWritingQuality}
+                                disabled={checkingWritingQuality}
+                                className="text-sm bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 whitespace-nowrap w-full sm:w-auto"
+                            >
+                                {checkingWritingQuality ? "Analyzing..." : "Analyze Writing"}
+                            </button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mb-2">
+                            AI reviews your summary and descriptions for weak phrases, missing results, and clarity.
+                        </p>
+
+                        {writingQualityResult && (
+                            <div className="mt-3">
+                                <span
+                                    className={`inline-block text-xs font-medium px-2.5 py-1 rounded-full mb-3 ${writingQualityResult.overallQuality === "Strong"
+                                        ? "bg-green-100 text-green-800"
+                                        : writingQualityResult.overallQuality === "Good"
+                                            ? "bg-amber-100 text-amber-800"
+                                            : "bg-red-100 text-red-800"
+                                        }`}
+                                >
+                                    {writingQualityResult.overallQuality}
+                                </span>
+
+                                {writingQualityResult.strengths.length > 0 && (
+                                    <div className="mb-3">
+                                        <p className="text-xs font-medium text-muted-foreground mb-1.5">✅ Strengths</p>
+                                        <ul className="space-y-1">
+                                            {writingQualityResult.strengths.map((item, i) => (
+                                                <li key={i} className="text-xs text-gray-700 flex gap-1.5">
+                                                    <span>•</span> {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {writingQualityResult.improvements.length > 0 && (
+                                    <div>
+                                        <p className="text-xs font-medium text-muted-foreground mb-1.5">
+                                            ⚠️ Suggested Improvements
+                                        </p>
+                                        <ul className="space-y-1 mb-3">
+                                            {writingQualityResult.improvements.map((item, i) => (
+                                                <li key={i} className="text-xs text-gray-700 flex gap-1.5">
+                                                    <span>•</span> {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <button
+                                            onClick={handleApplyImprovements}
+                                            disabled={applyingImprovements}
+                                            className="text-xs bg-primary text-primary-foreground px-3 py-1.5 rounded-md hover:opacity-90 disabled:opacity-50 w-full sm:w-auto whitespace-nowrap"
+                                        >
+                                            {applyingImprovements ? "Applying..." : "✨ Apply These Improvements"}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Public Sharing */}

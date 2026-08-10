@@ -1,10 +1,11 @@
 import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
-import { AIFeature } from '@prisma/client';
 import { GeminiProvider } from './providers/gemini.provider';
 import { PrismaService } from '../prisma/prisma.service';
 
 const FREE_MONTHLY_LIMIT = 10;
+
+type AiFeature = 'SUMMARY_GEN' | 'EXPERIENCE_GEN' | 'ATS_CHECK' | 'COVER_LETTER_GEN' | 'RESUME_IMPORT' | 'PROJECT_GEN';
 
 interface SummaryContext {
     personalInfo?: { title?: string;[key: string]: any };
@@ -53,7 +54,7 @@ export class AiService {
 
     // Sirf RECORD karta hai ki ek credit use hui — AI call SUCCESSFUL hone ke
     // BAAD hi call karna hai, taaki failed/retried attempts credit na khaayein.
-    private async recordUsage(userId: string, feature: AIFeature) {
+    private async recordUsage(userId: string, feature: AiFeature) {
         await this.prisma.aICreditUsage.create({
             data: { userId, featureUsed: feature },
         });
@@ -160,6 +161,192 @@ Tech Stack: ${techStack || 'Not specified'}`;
         const description = await this.geminiProvider.generateText(prompt);
         await this.recordUsage(user.id, 'PROJECT_GEN');
         return description.trim();
+    }
+
+    /**
+     * Compares the resume's content against a pasted job description and
+     * returns a match percentage, matched/missing keywords, and a short
+     * suggestion. Used by the "Check Job Match" feature inside ATS Score.
+     */
+    async matchJobDescription(clerkId: string, resumeContent: any, jobDescription: string) {
+        const user = await this.checkLimit(clerkId);
+
+        const { summary = '', skills = [], experience = [], projects = [] } = resumeContent || {};
+
+        const experienceText =
+            (experience || [])
+                .map((e: any) => `- ${e.role || ''} at ${e.company || ''}: ${e.description || ''}`)
+                .join('\n') || 'None';
+
+        const projectsText =
+            (projects || [])
+                .map((p: any) => `- ${p.title || ''} (${p.techStack || ''}): ${p.description || ''}`)
+                .join('\n') || 'None';
+
+        const prompt = `Compare the resume below against the target job description and return ONLY a JSON object (no markdown fences, no explanation) in this exact shape:
+
+{
+  "matchPercentage": 0,
+  "matchedKeywords": [],
+  "missingKeywords": [],
+  "suggestions": ""
+}
+
+Rules:
+- "matchPercentage" is a whole number from 0 to 100 estimating how well the resume aligns with the job description's requirements.
+- "matchedKeywords": important skills/technologies/qualifications mentioned in the job description that ARE found somewhere in the resume (max 10, most important first).
+- "missingKeywords": important skills/technologies/qualifications from the job description that are NOT found in the resume (max 10, most important first).
+- "suggestions": 1-2 concise sentences of concrete advice on what the candidate should add or emphasize to better match this job.
+
+Resume Summary: ${summary || 'Not provided'}
+Resume Skills: ${skills.length > 0 ? skills.join(', ') : 'None listed'}
+Resume Experience:
+${experienceText}
+Resume Projects:
+${projectsText}
+
+Job Description:
+"""
+${jobDescription.slice(0, 6000)}
+"""`;
+
+        const rawResponse = await this.geminiProvider.generateText(prompt);
+        const parsed = this.parseJsonResponse(rawResponse);
+
+        await this.recordUsage(user.id, 'ATS_CHECK');
+
+        return {
+            matchPercentage: typeof parsed.matchPercentage === 'number' ? parsed.matchPercentage : 0,
+            matchedKeywords: Array.isArray(parsed.matchedKeywords) ? parsed.matchedKeywords : [],
+            missingKeywords: Array.isArray(parsed.missingKeywords) ? parsed.missingKeywords : [],
+            suggestions: parsed.suggestions || '',
+        };
+    }
+
+    /**
+     * Reviews the resume's summary and experience/project descriptions for
+     * writing quality — weak phrases, missing quantifiable results, action
+     * verb usage — and returns specific, actionable feedback.
+     */
+    async analyzeWritingQuality(clerkId: string, resumeContent: any) {
+        const user = await this.checkLimit(clerkId);
+
+        const { summary = '', experience = [], projects = [] } = resumeContent || {};
+
+        const experienceText =
+            (experience || [])
+                .map((e: any) => `- ${e.role || ''} at ${e.company || ''}: ${e.description || 'No description'}`)
+                .join('\n') || 'None provided';
+
+        const projectsText =
+            (projects || [])
+                .map((p: any) => `- ${p.title || ''}: ${p.description || 'No description'}`)
+                .join('\n') || 'None provided';
+
+        const prompt = `Analyze the writing quality of this resume's summary and experience/project descriptions from an ATS and recruiter perspective. Return ONLY a JSON object (no markdown fences, no explanation) in this exact shape:
+
+{
+  "overallQuality": "Needs Improvement",
+  "strengths": [],
+  "improvements": []
+}
+
+Rules:
+- "overallQuality" must be EXACTLY one of these three strings: "Strong", "Good", "Needs Improvement".
+- "strengths": 2-4 short bullet points (each under 15 words) about what the writing does well (e.g. action verbs, quantifiable results, clarity).
+- "improvements": 2-5 short, specific, actionable bullet points (each under 20 words). Call out weak phrases actually found in the text below (e.g. "Responsible for" should become an action verb), missing numbers/metrics, vague wording, or repetition.
+- Be specific to THIS resume's actual content — do not give generic advice that doesn't reference something in the text below.
+- If there isn't enough content to analyze, say so honestly in "improvements".
+
+Resume Summary: ${summary || 'Not provided'}
+
+Experience Descriptions:
+${experienceText}
+
+Project Descriptions:
+${projectsText}`;
+
+        const rawResponse = await this.geminiProvider.generateText(prompt);
+        const parsed = this.parseJsonResponse(rawResponse);
+
+        await this.recordUsage(user.id, 'ATS_CHECK');
+
+        return {
+            overallQuality: ['Strong', 'Good', 'Needs Improvement'].includes(parsed.overallQuality)
+                ? parsed.overallQuality
+                : 'Needs Improvement',
+            strengths: Array.isArray(parsed.strengths) ? parsed.strengths : [],
+            improvements: Array.isArray(parsed.improvements) ? parsed.improvements : [],
+        };
+    }
+
+    /**
+     * Rewrites the summary and experience/project descriptions to address
+     * specific feedback (from the Writing Quality Check), without inventing
+     * new facts, companies, or fabricated numbers.
+     */
+    async improveResumeContent(
+        clerkId: string,
+        content: { summary?: string; experience?: any[]; projects?: any[] },
+        improvements: string[],
+    ) {
+        const user = await this.checkLimit(clerkId);
+
+        const { summary = '', experience = [], projects = [] } = content;
+
+        const experienceInput = experience.map((e: any, i: number) => ({
+            index: i,
+            role: e.role || '',
+            company: e.company || '',
+            description: e.description || '',
+        }));
+
+        const projectsInput = projects.map((p: any, i: number) => ({
+            index: i,
+            title: p.title || '',
+            techStack: p.techStack || '',
+            description: p.description || '',
+        }));
+
+        const prompt = `You are improving a resume based on specific feedback. Rewrite the summary and the "description" field of each experience and project entry below so they address the feedback — stronger action verbs, clearer impact, less repetition.
+
+CRITICAL RULES:
+- NEVER invent new facts: do not add companies, technologies, degrees, or specific achievements that weren't already implied by the original text.
+- If a suggestion asks for measurable results (numbers/%) and none exist in the original text, insert a clearly marked placeholder like "[add a specific number here]" instead of making one up.
+- Keep each experience/project description roughly the same length as the original (do not pad with fluff).
+- Preserve the meaning and factual content — only improve the WRITING.
+
+Feedback to address:
+${improvements.map((s) => `- ${s}`).join('\n')}
+
+Original Summary:
+"${summary || 'None provided'}"
+
+Original Experience Entries:
+${JSON.stringify(experienceInput, null, 2)}
+
+Original Project Entries:
+${JSON.stringify(projectsInput, null, 2)}
+
+Return ONLY a JSON object (no markdown fences, no explanation) in this EXACT shape:
+{
+  "summary": "improved summary text here",
+  "experience": [ { "index": 0, "description": "improved description" } ],
+  "projects": [ { "index": 0, "description": "improved description" } ]
+}
+
+Include one object per input entry, using the same "index" values given above.`;
+
+        const rawResponse = await this.geminiProvider.generateText(prompt);
+        const parsed = this.parseJsonResponse(rawResponse);
+
+        await this.recordUsage(user.id, 'ATS_CHECK');
+
+        return {
+            summary: typeof parsed.summary === 'string' ? parsed.summary : summary,
+            experience: Array.isArray(parsed.experience) ? parsed.experience : [],
+            projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+        };
     }
 
     /**

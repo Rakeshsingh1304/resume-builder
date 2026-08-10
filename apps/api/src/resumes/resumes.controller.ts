@@ -87,4 +87,25 @@ export class ResumesController {
     calculateAtsScore(@Req() req: any, @Param('id') id: string) {
         return this.resumesService.calculateAtsScore(req.auth.userId, id);
     }
+
+    // Compares this resume's content against a pasted job description
+    @Post(':id/job-match')
+    async checkJobMatch(
+        @Req() req: any,
+        @Param('id') id: string,
+        @Body() body: { jobDescription: string },
+    ) {
+        if (!body.jobDescription || body.jobDescription.trim().length < 20) {
+            throw new BadRequestException('Please paste a more complete job description.');
+        }
+        const resume = await this.resumesService.findOne(req.auth.userId, id);
+        return this.aiService.matchJobDescription(req.auth.userId, resume.content, body.jobDescription);
+    }
+
+    // AI review of the summary/experience/project writing quality
+    @Post(':id/writing-quality')
+    async checkWritingQuality(@Req() req: any, @Param('id') id: string) {
+        const resume = await this.resumesService.findOne(req.auth.userId, id);
+        return this.aiService.analyzeWritingQuality(req.auth.userId, resume.content);
+    }
 }

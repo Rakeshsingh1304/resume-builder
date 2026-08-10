@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, BadRequestException } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { ClerkAuthGuard } from '../auth/clerk-auth.guard';
 
@@ -58,5 +58,24 @@ export class AiController {
             body.techStack,
         );
         return { description };
+    }
+
+    // Rewrites summary + experience/project descriptions to address
+    // specific feedback from the Writing Quality Check
+    @Post('improve-resume')
+    async improveResume(
+        @Req() req: any,
+        @Body()
+        body: {
+            summary?: string;
+            experience?: any[];
+            projects?: any[];
+            improvements: string[];
+        },
+    ) {
+        if (!body.improvements || body.improvements.length === 0) {
+            throw new BadRequestException('No improvements to apply.');
+        }
+        return this.aiService.improveResumeContent(req.auth.userId, body, body.improvements);
     }
 }
