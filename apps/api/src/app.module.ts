@@ -8,6 +8,7 @@ import { ResumesModule } from './resumes/resumes.module';
 import { AiModule } from './ai/ai.module';
 import { CoverLettersModule } from './cover-letters/cover-letters.module';
 import { AdminModule } from './admin/admin.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AdminModule } from './admin/admin.module';
     AiModule,
     CoverLettersModule,
     AdminModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

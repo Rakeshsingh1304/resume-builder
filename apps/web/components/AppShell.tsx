@@ -1,19 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
+import { useAuth, UserButton } from "@clerk/nextjs";
+import { apiFetch } from "@/lib/api";
 
-const navItems = [
+const baseNavItems = [
     { label: "My Resumes", href: "/dashboard" },
     { label: "Cover Letters", href: "/cover-letters" },
-    { label: "Admin", href: "/admin" },
 ];
+
+const adminNavItem = { label: "Admin", href: "/admin" };
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const { getToken } = useAuth();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
+
+    useEffect(() => {
+        async function checkRole() {
+            try {
+                const token = await getToken();
+                const me = await apiFetch("/api/users/me", token);
+                setIsAdmin(me.role === "ADMIN");
+            } catch {
+                // If this fails for any reason, just don't show the Admin link
+                setIsAdmin(false);
+            }
+        }
+        checkRole();
+    }, []);
+
+    const navItems = isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
 
     return (
         <div className="flex min-h-screen">

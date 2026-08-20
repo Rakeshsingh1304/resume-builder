@@ -10,12 +10,14 @@ export default function PrintResumePage() {
     const { id } = useParams<{ id: string }>();
     const { getToken } = useAuth();
     const [data, setData] = useState<any>(null);
+    const [templateId, setTemplateId] = useState<string>("classic");
 
     useEffect(() => {
         async function load() {
             const token = await getToken();
             const resume = await apiFetch(`/api/resumes/${id}`, token);
             setData(resume.content || {});
+            setTemplateId(resume.templateId || "classic");
         }
         load();
     }, [id]);
@@ -43,6 +45,7 @@ export default function PrintResumePage() {
                     certifications={data.certifications || []}
                     languages={data.languages || []}
                     achievements={data.achievements || []}
+                    templateId={templateId}
                 />
             </div>
         </div>

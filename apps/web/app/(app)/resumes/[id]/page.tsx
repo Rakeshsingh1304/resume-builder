@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import ResumeTemplate from "@/components/ResumeTemplate";
 import ScaledResumePreview from "@/components/ScaledResumePreview";
+import { TEMPLATES } from "@/components/resume-templates/TemplateRenderer";
 
 interface PersonalInfo {
     fullName?: string;
@@ -76,6 +77,7 @@ interface Resume {
     content: ResumeContent;
     isPublic: boolean;
     publicSlug: string | null;
+    templateId?: string;
 }
 
 interface AtsBreakdownItem {
@@ -117,6 +119,7 @@ export default function ResumeBuilderPage() {
     const [achievements, setAchievements] = useState<string[]>([]);
     const [achievementInput, setAchievementInput] = useState("");
     const [summary, setSummary] = useState("");
+    const [templateId, setTemplateId] = useState("classic");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [generatingSummary, setGeneratingSummary] = useState(false);
@@ -176,6 +179,7 @@ export default function ResumeBuilderPage() {
             setCertifications(data.content?.certifications || []);
             setLanguages(data.content?.languages || []);
             setAchievements(data.content?.achievements || []);
+            setTemplateId(data.templateId || "classic");
             setLoading(false);
         }
         load();
@@ -310,6 +314,20 @@ export default function ResumeBuilderPage() {
         if (e.key === "Enter") {
             e.preventDefault();
             addSkill();
+        }
+    }
+
+    async function handleSelectTemplate(newTemplateId: string) {
+        setTemplateId(newTemplateId);
+        const token = await getToken();
+        try {
+            await apiFetch(`/api/resumes/${id}`, token, {
+                method: "PATCH",
+                body: JSON.stringify({ templateId: newTemplateId }),
+            });
+        } catch (err: any) {
+            // TEMPORARY: showing the error so we can debug why the save is failing
+            alert("Template save failed: " + (err.message || "Unknown error"));
         }
     }
 
@@ -1364,6 +1382,25 @@ export default function ResumeBuilderPage() {
 
             {/* Right Side: Live Preview */}
             <div className="w-full lg:w-1/2 lg:sticky lg:top-8 lg:self-start max-w-[556px] mx-auto lg:mx-0">
+                <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                    <span className="text-xs font-medium text-muted-foreground shrink-0 mr-1">🎨 Template:</span>
+                    {TEMPLATES.map((t) => (
+                        <button
+                            key={t.id}
+                            onClick={() => handleSelectTemplate(t.id)}
+                            className={`shrink-0 text-xs px-3 py-1.5 rounded-full whitespace-nowrap border transition flex items-center gap-1.5 ${templateId === t.id
+                                ? "border-primary bg-primary/10 text-foreground font-medium"
+                                : "border-border text-muted-foreground hover:border-primary/50"
+                                }`}
+                        >
+                            <span
+                                className="w-2.5 h-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: t.accentColor }}
+                            />
+                            {t.name}
+                        </button>
+                    ))}
+                </div>
                 <ScaledResumePreview
                     personalInfo={personalInfo}
                     summary={summary}
@@ -1374,6 +1411,7 @@ export default function ResumeBuilderPage() {
                     certifications={certifications}
                     languages={languages}
                     achievements={achievements}
+                    templateId={templateId}
                 />
             </div>
         </div>

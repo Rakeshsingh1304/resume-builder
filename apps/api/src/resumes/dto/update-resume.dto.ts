@@ -5,6 +5,10 @@ export class UpdateResumeDto {
     @IsOptional()
     title?: string;
 
+    @IsString()
+    @IsOptional()
+    templateId?: string;
+
     @IsOptional()
     content?: any;
 

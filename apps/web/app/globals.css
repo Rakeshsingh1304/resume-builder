@@ -150,4 +150,13 @@
     height: auto !important;
   }
 
+  /* Without this, browsers strip background colors/images when printing
+     by default (to save ink) — this forces templates with colored
+     sidebars, headers, etc. to print exactly as they appear on screen. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
 }

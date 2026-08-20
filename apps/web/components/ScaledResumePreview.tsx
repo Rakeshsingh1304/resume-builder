@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import ResumeTemplate from "./ResumeTemplate";
+import TemplateRenderer from "./resume-templates/TemplateRenderer";
 
 const A4_WIDTH = 794; // px, roughly 210mm at 96 DPI
 const A4_HEIGHT = 1123; // px, roughly 297mm at 96 DPI
@@ -16,6 +16,7 @@ interface Props {
     certifications?: any[];
     languages?: any[];
     achievements?: string[];
+    templateId?: string;
 }
 
 export default function ScaledResumePreview(props: Props) {
@@ -50,7 +51,7 @@ export default function ScaledResumePreview(props: Props) {
                     transformOrigin: "top left",
                 }}
             >
-                <ResumeTemplate {...props} />
+                <TemplateRenderer {...props} />
             </div>
         </div>
     );
