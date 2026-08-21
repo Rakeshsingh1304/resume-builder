@@ -1382,24 +1382,26 @@ export default function ResumeBuilderPage() {
 
             {/* Right Side: Live Preview */}
             <div className="w-full lg:w-1/2 lg:sticky lg:top-8 lg:self-start max-w-[556px] mx-auto lg:mx-0">
-                <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                    <span className="text-xs font-medium text-muted-foreground shrink-0 mr-1">🎨 Template:</span>
-                    {TEMPLATES.map((t) => (
-                        <button
-                            key={t.id}
-                            onClick={() => handleSelectTemplate(t.id)}
-                            className={`shrink-0 text-xs px-3 py-1.5 rounded-full whitespace-nowrap border transition flex items-center gap-1.5 ${templateId === t.id
-                                ? "border-primary bg-primary/10 text-foreground font-medium"
-                                : "border-border text-muted-foreground hover:border-primary/50"
-                                }`}
-                        >
-                            <span
-                                className="w-2.5 h-2.5 rounded-full shrink-0"
-                                style={{ backgroundColor: t.accentColor }}
-                            />
-                            {t.name}
-                        </button>
-                    ))}
+                <div className="mb-3 flex items-center gap-2">
+                    <span className="text-xs font-medium text-muted-foreground shrink-0">🎨 Template:</span>
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                        {TEMPLATES.map((t) => (
+                            <button
+                                key={t.id}
+                                onClick={() => handleSelectTemplate(t.id)}
+                                className={`shrink-0 text-xs px-3 py-1.5 rounded-full whitespace-nowrap border transition flex items-center gap-1.5 ${templateId === t.id
+                                    ? "border-primary bg-primary/10 text-foreground font-medium"
+                                    : "border-border text-muted-foreground hover:border-primary/50"
+                                    }`}
+                            >
+                                <span
+                                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                                    style={{ backgroundColor: t.accentColor }}
+                                />
+                                {t.name}
+                            </button>
+                        ))}
+                    </div>
                 </div>
                 <ScaledResumePreview
                     personalInfo={personalInfo}

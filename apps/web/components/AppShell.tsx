@@ -36,7 +36,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     const navItems = isAdmin ? [...baseNavItems, adminNavItem] : baseNavItems;
 
     return (
-        <div className="flex min-h-screen">
+        <div className="flex h-screen">
             {/* Mobile Top Bar (visible only on small screens) */}
             <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-[var(--sidebar)] text-white flex items-center justify-between px-4 z-30">
                 <h1 className="font-heading text-lg font-bold">ResumeAI</h1>
@@ -96,7 +96,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 bg-[var(--background)] overflow-auto pt-14 md:pt-0 w-full md:w-auto">
+            <main className="flex-1 h-screen bg-[var(--background)] overflow-y-auto pt-14 md:pt-0 w-full md:w-auto">
                 {children}
             </main>
         </div>
