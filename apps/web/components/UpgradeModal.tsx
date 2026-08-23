@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { apiFetch } from "@/lib/api";
 import { X, CheckCircle2, Loader2, Crown } from "lucide-react";
+import { getPricingPlan, DEFAULT_PRICING_PLAN, PricingPlan } from "@/lib/pricing";
 
 interface UpgradeModalProps {
     isOpen: boolean;
@@ -15,13 +16,24 @@ export default function UpgradeModal({ isOpen, onClose, onUpgraded }: UpgradeMod
     const { getToken } = useAuth();
     const [processing, setProcessing] = useState(false);
 
+    // Starts with a safe default (so server/client render match), then
+    // updates to the region-specific price right after mounting.
+    const [plan, setPlan] = useState<PricingPlan>(DEFAULT_PRICING_PLAN);
+
+    useEffect(() => {
+        setPlan(getPricingPlan());
+    }, []);
+
     if (!isOpen) return null;
 
     async function handleDemoPay() {
         setProcessing(true);
         try {
             const token = await getToken();
-            await apiFetch("/api/payments/demo-checkout", token, { method: "POST" });
+            await apiFetch("/api/payments/demo-checkout", token, {
+                method: "POST",
+                body: JSON.stringify({ price: plan.price, currency: plan.currency }),
+            });
             onUpgraded();
             onClose();
         } catch (err: any) {
@@ -58,7 +70,9 @@ export default function UpgradeModal({ isOpen, onClose, onUpgraded }: UpgradeMod
 
                 <div className="border border-border rounded-lg p-5 mb-6 bg-background">
                     <div className="flex items-baseline gap-1 mb-4">
-                        <span className="font-heading text-3xl font-bold text-foreground">₹149</span>
+                        <span className="font-heading text-3xl font-bold text-foreground">
+                            {plan.displayPrice}
+                        </span>
                         <span className="text-sm text-muted-foreground">/ month</span>
                     </div>
                     <ul className="space-y-2.5 text-sm text-foreground">
@@ -91,7 +105,7 @@ export default function UpgradeModal({ isOpen, onClose, onUpgraded }: UpgradeMod
                             <Loader2 size={16} className="animate-spin" /> Processing...
                         </>
                     ) : (
-                        "Pay ₹149 & Upgrade (Demo)"
+                        `Pay ${plan.displayPrice} & Upgrade (Demo)`
                     )}
                 </button>
                 <p className="text-[11px] text-muted-foreground text-center mt-3">
