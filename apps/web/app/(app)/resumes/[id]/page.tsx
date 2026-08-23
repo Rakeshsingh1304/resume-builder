@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/api";
 import ResumeTemplate from "@/components/ResumeTemplate";
 import ScaledResumePreview from "@/components/ScaledResumePreview";
 import { TEMPLATES } from "@/components/resume-templates/TemplateRenderer";
+import UpgradeModal from "@/components/UpgradeModal";
 
 interface PersonalInfo {
     fullName?: string;
@@ -120,6 +121,8 @@ export default function ResumeBuilderPage() {
     const [achievementInput, setAchievementInput] = useState("");
     const [summary, setSummary] = useState("");
     const [templateId, setTemplateId] = useState("classic");
+    const [subscriptionTier, setSubscriptionTier] = useState<string>("FREE");
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [generatingSummary, setGeneratingSummary] = useState(false);
@@ -340,6 +343,33 @@ export default function ResumeBuilderPage() {
             body: JSON.stringify({ content: updatedContent }),
         });
         setSaving(false);
+    }
+
+    useEffect(() => {
+        async function loadUserTier() {
+            try {
+                const token = await getToken();
+                const me = await apiFetch("/api/users/me", token);
+                setSubscriptionTier(me.subscriptionTier || "FREE");
+            } catch {
+                // If this fails, default to FREE (safer than assuming PRO)
+            }
+        }
+        loadUserTier();
+    }, []);
+
+    function handleDownloadClick() {
+        if (subscriptionTier === "PRO") {
+            window.open(`/print/${id}`, "_blank");
+        } else {
+            setIsUpgradeModalOpen(true);
+        }
+    }
+
+    function handleUpgraded() {
+        setSubscriptionTier("PRO");
+        // Continue automatically with the download now that they're Pro
+        window.open(`/print/${id}`, "_blank");
     }
 
     async function handleGenerateSummary() {
@@ -1372,9 +1402,10 @@ export default function ResumeBuilderPage() {
                         {saving ? "Saving..." : "Save"}
                     </button>
                     <button
-                        onClick={() => window.open(`/print/${id}`, "_blank")}
-                        className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:bg-muted whitespace-nowrap"
+                        onClick={handleDownloadClick}
+                        className="bg-card border border-border px-4 py-2.5 rounded-md text-sm font-medium hover:bg-muted whitespace-nowrap flex items-center justify-center gap-1.5"
                     >
+                        {subscriptionTier !== "PRO" && <span>🔒</span>}
                         📄 Download PDF
                     </button>
                 </div>
@@ -1416,6 +1447,12 @@ export default function ResumeBuilderPage() {
                     templateId={templateId}
                 />
             </div>
+
+            <UpgradeModal
+                isOpen={isUpgradeModalOpen}
+                onClose={() => setIsUpgradeModalOpen(false)}
+                onUpgraded={handleUpgraded}
+            />
         </div>
     );
 }

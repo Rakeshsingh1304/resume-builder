@@ -9,6 +9,7 @@ import { AiModule } from './ai/ai.module';
 import { CoverLettersModule } from './cover-letters/cover-letters.module';
 import { AdminModule } from './admin/admin.module';
 import { UsersModule } from './users/users.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UsersModule } from './users/users.module';
     CoverLettersModule,
     AdminModule,
     UsersModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
