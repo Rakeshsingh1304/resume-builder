@@ -28,7 +28,7 @@ export default function Template1ModernBlue({
         >
             {/* Sidebar */}
             <div className="w-[270px] shrink-0 bg-[#14213D] text-white p-7" style={{ breakInside: "avoid" }}>
-                <InitialsAvatar fullName={personalInfo.fullName} size={64} />
+                <InitialsAvatar fullName={personalInfo.fullName} photoUrl={personalInfo.photoUrl} size={64} />
                 <h1 className="text-[22px] font-bold mt-4 leading-tight">
                     {personalInfo.fullName || "Your Name"}
                 </h1>

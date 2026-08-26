@@ -11,8 +11,8 @@ export interface PricingPlan {
 //
 // To add/change a region: just add or edit an entry here.
 const PRICING_TABLE: Record<string, PricingPlan> = {
-    IN: { price: 149, currency: "INR", displayPrice: "₹149" },
-    DEFAULT: { price: 7, currency: "USD", displayPrice: "$7" },
+    DEFAULT: { price: 149, currency: "INR", displayPrice: "₹149" },
+    US: { price: 7, currency: "USD", displayPrice: "$7" },
 };
 
 /**

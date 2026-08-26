@@ -33,7 +33,7 @@ export default function Template10Executive({
         >
             {/* Sidebar */}
             <div className="w-[270px] shrink-0 bg-black text-white p-7" style={{ breakInside: "avoid" }}>
-                <InitialsAvatar fullName={personalInfo.fullName} size={64} bgColor={GOLD} textColor="#000000" />
+                <InitialsAvatar fullName={personalInfo.fullName} photoUrl={personalInfo.photoUrl} size={64} bgColor={GOLD} textColor="#000000" />
                 <h1
                     className="text-[22px] font-bold mt-4 leading-tight"
                     style={{ color: GOLD, fontFamily: "Georgia, serif" }}

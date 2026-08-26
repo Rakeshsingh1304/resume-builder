@@ -45,7 +45,7 @@ export default function Template4CreativePurple({
                         className="absolute -inset-2 rounded-full border-2 border-dashed opacity-40"
                         style={{ borderColor: PURPLE }}
                     />
-                    <InitialsAvatar fullName={personalInfo.fullName} size={64} bgColor={PURPLE} textColor="#FFFFFF" />
+                    <InitialsAvatar fullName={personalInfo.fullName} photoUrl={personalInfo.photoUrl} size={64} bgColor={PURPLE} textColor="#FFFFFF" />
                 </div>
             </div>
 

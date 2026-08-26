@@ -79,7 +79,7 @@ export default function Template9CreativeYellow({
                         style={{ backgroundColor: YELLOW }}
                     />
                     <div className="relative">
-                        <InitialsAvatar fullName={personalInfo.fullName} size={60} bgColor={YELLOW} textColor="#1A1A1A" />
+                        <InitialsAvatar fullName={personalInfo.fullName} photoUrl={personalInfo.photoUrl} size={60} bgColor={YELLOW} textColor="#1A1A1A" />
                     </div>
                 </div>
             </div>

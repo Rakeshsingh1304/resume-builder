@@ -37,6 +37,7 @@ export default function Template2MinimalBlack({
                 <div className="flex items-start gap-4">
                     <InitialsAvatar
                         fullName={personalInfo.fullName}
+                        photoUrl={personalInfo.photoUrl}
                         size={56}
                         bgColor="#000000"
                         textColor="#FFFFFF"

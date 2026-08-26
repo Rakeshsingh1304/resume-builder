@@ -29,7 +29,7 @@ export default function Template3ProfessionalDark({
             {/* Sidebar */}
             <div className="w-[270px] shrink-0 bg-[#0B0F19] text-white p-7 text-center" style={{ breakInside: "avoid" }}>
                 <div className="flex justify-center">
-                    <InitialsAvatar fullName={personalInfo.fullName} size={72} bgColor="#94A3B8" textColor="#0B0F19" />
+                    <InitialsAvatar fullName={personalInfo.fullName} photoUrl={personalInfo.photoUrl} size={72} bgColor="#94A3B8" textColor="#0B0F19" />
                 </div>
                 <h1 className="text-[21px] font-bold mt-4 leading-tight">
                     {personalInfo.fullName || "Your Name"}

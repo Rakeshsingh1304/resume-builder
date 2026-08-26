@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch } from "@/lib/api";
+import { compressImageToDataUrl } from "@/lib/imageUtils";
 import ResumeTemplate from "@/components/ResumeTemplate";
 import ScaledResumePreview from "@/components/ScaledResumePreview";
 import { TEMPLATES } from "@/components/resume-templates/TemplateRenderer";
@@ -18,6 +19,7 @@ interface PersonalInfo {
     linkedin?: string;
     github?: string;
     website?: string;
+    photoUrl?: string;
 }
 
 interface ExperienceEntry {
@@ -123,6 +125,7 @@ export default function ResumeBuilderPage() {
     const [templateId, setTemplateId] = useState("classic");
     const [subscriptionTier, setSubscriptionTier] = useState<string>("FREE");
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [photoUploading, setPhotoUploading] = useState(false);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [generatingSummary, setGeneratingSummary] = useState(false);
@@ -190,6 +193,37 @@ export default function ResumeBuilderPage() {
 
     function updateField(field: keyof PersonalInfo, value: string) {
         setPersonalInfo((prev) => ({ ...prev, [field]: value }));
+    }
+
+    async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            alert("Please select an image file (JPG, PNG, etc.)");
+            e.target.value = "";
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            alert("Please select an image under 10MB.");
+            e.target.value = "";
+            return;
+        }
+
+        setPhotoUploading(true);
+        try {
+            const dataUrl = await compressImageToDataUrl(file);
+            setPersonalInfo((prev) => ({ ...prev, photoUrl: dataUrl }));
+        } catch (err: any) {
+            alert(err.message || "Could not process that image. Please try another one.");
+        } finally {
+            setPhotoUploading(false);
+            e.target.value = "";
+        }
+    }
+
+    function handleRemovePhoto() {
+        setPersonalInfo((prev) => ({ ...prev, photoUrl: undefined }));
     }
 
     function addExperience() {
@@ -836,6 +870,48 @@ export default function ResumeBuilderPage() {
                 {currentStep === 0 && (
                     <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                         <h2 className="font-heading text-lg font-semibold text-foreground">Personal Information</h2>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1 text-foreground">
+                                Profile Photo (optional)
+                            </label>
+                            <div className="flex items-center gap-4">
+                                {personalInfo.photoUrl ? (
+                                    <img
+                                        src={personalInfo.photoUrl}
+                                        alt="Profile"
+                                        className="w-16 h-16 rounded-full object-cover border border-border"
+                                    />
+                                ) : (
+                                    <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground text-[10px] text-center px-1">
+                                        No photo
+                                    </div>
+                                )}
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-sm bg-background border border-border px-3 py-1.5 rounded-md hover:bg-muted cursor-pointer inline-block w-fit">
+                                        {photoUploading ? "Processing..." : "Choose Photo"}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handlePhotoUpload}
+                                            disabled={photoUploading}
+                                        />
+                                    </label>
+                                    {personalInfo.photoUrl && (
+                                        <button
+                                            onClick={handleRemovePhoto}
+                                            className="text-xs text-destructive hover:underline text-left"
+                                        >
+                                            Remove photo
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1.5">
+                                Only shown in templates that include a photo (e.g. Modern Blue, Fresher, Executive).
+                            </p>
+                        </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-1 text-foreground">Full Name</label>

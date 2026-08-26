@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import {
   motion,
   AnimatePresence,
   useScroll,
+  useSpring,
   useTransform,
+  useMotionValue,
 } from "framer-motion";
 import {
   Sparkles,
@@ -24,7 +27,6 @@ import {
   Zap,
   Brain,
   ScanSearch,
-  Download,
   ShieldCheck,
   BriefcaseBusiness,
   WandSparkles,
@@ -34,9 +36,10 @@ import {
   Search,
   PenLine,
   Rocket,
-  Users,
   TrendingUp,
   Award,
+  MousePointer2,
+  Check,
 } from "lucide-react";
 
 /* -------------------------------------------------------------------------- */
@@ -65,17 +68,17 @@ const features = [
   {
     icon: Sparkles,
     title: "AI Writing Assistant",
-    desc: "Turn simple details into strong professional summaries and achievement-focused bullet points.",
+    desc: "Turn simple details into stronger professional summaries and achievement-focused bullet points.",
   },
   {
     icon: Target,
     title: "ATS Score Checker",
-    desc: "Understand how your resume performs and discover exactly what needs improvement.",
+    desc: "Understand how your resume performs and discover what needs improvement.",
   },
   {
     icon: ScanSearch,
     title: "Job Match Analysis",
-    desc: "Paste a job description and instantly discover missing skills and important keywords.",
+    desc: "Compare your resume with a job description and discover important skills and keywords.",
   },
   {
     icon: LayoutTemplate,
@@ -85,12 +88,70 @@ const features = [
   {
     icon: Upload,
     title: "Upload & Autofill",
-    desc: "Already have a resume? Upload it and let ResumeAI organize your information.",
+    desc: "Already have a resume? Upload it and use your existing information as a starting point.",
   },
   {
     icon: Share2,
     title: "Public Resume Link",
     desc: "Create a clean shareable link for recruiters, LinkedIn, email, and applications.",
+  },
+];
+
+const resumeTemplates = [
+  {
+    id: 1,
+    name: "Classic Professional",
+    image: "/images/templates/template-1.png",
+  },
+  {
+    id: 2,
+    name: "Modern Executive",
+    image: "/images/templates/template-2.png",
+  },
+  {
+    id: 3,
+    name: "Clean Professional",
+    image: "/images/templates/template-3.png",
+  },
+  {
+    id: 4,
+    name: "Executive Dark",
+    image: "/images/templates/template-4.png",
+  },
+  {
+    id: 5,
+    name: "Minimal Resume",
+    image: "/images/templates/template-5.png",
+  },
+  {
+    id: 6,
+    name: "Modern Blue",
+    image: "/images/templates/template-6.png",
+  },
+  {
+    id: 7,
+    name: "Professional Navy",
+    image: "/images/templates/template-7.png",
+  },
+  {
+    id: 8,
+    name: "Creative Resume",
+    image: "/images/templates/template-8.png",
+  },
+  {
+    id: 9,
+    name: "Corporate Resume",
+    image: "/images/templates/template-9.png",
+  },
+  {
+    id: 10,
+    name: "Minimal Dark",
+    image: "/images/templates/template-10.png",
+  },
+  {
+    id: 11,
+    name: "Premium Resume",
+    image: "/images/templates/template-11.png",
   },
 ];
 
@@ -144,7 +205,7 @@ const faqs = [
 ];
 
 /* -------------------------------------------------------------------------- */
-/*                              REUSABLE COMPONENTS                            */
+/*                              REUSABLE COMPONENTS                           */
 /* -------------------------------------------------------------------------- */
 
 function SectionHeading({
@@ -157,9 +218,9 @@ function SectionHeading({
   description?: string;
 }) {
   return (
-    <div className="mx-auto mb-14 max-w-3xl text-center">
+    <div className="mx-auto mb-12 max-w-3xl text-center sm:mb-16">
       {badge && (
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-bold tracking-wider text-primary">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-[11px] font-bold tracking-[0.12em] text-primary sm:text-xs">
           <Sparkles size={14} />
           {badge}
         </div>
@@ -189,10 +250,10 @@ function FadeIn({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 35 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.65, delay }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={{ duration: 0.6, delay }}
       className={className}
     >
       {children}
@@ -200,51 +261,129 @@ function FadeIn({
   );
 }
 
+function AnimatedCounter({
+  value,
+  suffix = "",
+}: {
+  value: number;
+  suffix?: string;
+}) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const duration = 1400;
+    const increment = value / (duration / 16);
+
+    const timer = setInterval(() => {
+      start += increment;
+
+      if (start >= value) {
+        setCount(value);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return (
+    <>
+      {count}
+      {suffix}
+    </>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
-/*                              RESUME PREVIEW                                */
+/*                            SCROLL NAVIGATION                               */
+/* -------------------------------------------------------------------------- */
+
+function ScrollProgress() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 30,
+  });
+
+  return (
+    <motion.div
+      style={{ scaleX }}
+      className="fixed left-0 right-0 top-0 z-[100] h-[3px] origin-left bg-primary"
+    />
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                             RESUME PREVIEW                                 */
 /* -------------------------------------------------------------------------- */
 
 function ResumePreview() {
-  return (
-    <div className="relative mx-auto w-full max-w-[460px]">
-      {/* Glow */}
-      <div className="absolute inset-0 scale-90 rounded-full bg-primary/20 blur-3xl" />
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
 
-      {/* Floating card top */}
+  const rotateX = useTransform(y, [-100, 100], [5, -5]);
+  const rotateY = useTransform(x, [-100, 100], [-5, 5]);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+
+    x.set(e.clientX - rect.left - rect.width / 2);
+    y.set(e.clientY - rect.top - rect.height / 2);
+  }
+
+  function handleMouseLeave() {
+    x.set(0);
+    y.set(0);
+  }
+
+  return (
+    <div
+      className="relative mx-auto w-full max-w-[460px] perspective-[1200px]"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="absolute inset-0 scale-95 rounded-full bg-primary/20 blur-3xl" />
+
       <motion.div
-        animate={{ y: [0, -12, 0] }}
+        animate={{ y: [0, -10, 0] }}
         transition={{ duration: 4, repeat: Infinity }}
-        className="absolute -right-4 -top-5 z-20 hidden rounded-2xl border border-border bg-card p-4 shadow-xl sm:block"
+        className="absolute -right-1 -top-4 z-30 hidden rounded-2xl border border-border bg-card p-3 shadow-xl sm:block"
       >
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/10 text-green-600">
             <TrendingUp size={20} />
           </div>
+
           <div>
-            <p className="text-xs text-muted-foreground">Resume Score</p>
+            <p className="text-[10px] text-muted-foreground">Resume Score</p>
             <p className="font-heading text-lg font-bold">+24%</p>
           </div>
         </div>
       </motion.div>
 
-      {/* Main resume */}
       <motion.div
-        initial={{ opacity: 0, rotate: 6, y: 40 }}
+        style={{ rotateX, rotateY }}
+        initial={{ opacity: 0, rotate: 4, y: 40 }}
         animate={{ opacity: 1, rotate: 0, y: 0 }}
-        transition={{ duration: 0.9, delay: 0.3 }}
-        className="relative z-10 rounded-2xl border border-border bg-card p-6 shadow-2xl sm:p-8"
+        transition={{ duration: 0.8, delay: 0.25 }}
+        className="relative z-10 transform-gpu rounded-2xl border border-border bg-card p-5 shadow-2xl sm:p-8"
       >
         <div className="mb-6 border-b-2 border-[#14213D] pb-5">
-          <div className="mb-3 flex items-start justify-between">
+          <div className="flex items-start justify-between">
             <div>
-              <div className="h-4 w-44 rounded bg-[#14213D]" />
+              <div className="h-4 w-36 rounded bg-[#14213D] sm:w-44" />
               <div className="mt-2 h-2.5 w-28 rounded bg-primary" />
             </div>
 
-            <div className="h-10 w-10 rounded-full bg-secondary" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+              <Award size={17} className="text-primary" />
+            </div>
           </div>
 
-          <div className="mt-3 flex gap-3">
+          <div className="mt-4 flex flex-wrap gap-2">
             <div className="h-2 w-16 rounded bg-muted" />
             <div className="h-2 w-20 rounded bg-muted" />
             <div className="h-2 w-14 rounded bg-muted" />
@@ -254,6 +393,7 @@ function ResumePreview() {
         <div className="space-y-6">
           <div>
             <div className="mb-3 h-2.5 w-24 rounded bg-[#14213D]/80" />
+
             <div className="space-y-2">
               <div className="h-2 w-full rounded bg-muted" />
               <div className="h-2 w-11/12 rounded bg-muted" />
@@ -291,20 +431,25 @@ function ResumePreview() {
         </div>
       </motion.div>
 
-      {/* ATS floating card */}
       <motion.div
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 4.5, repeat: Infinity }}
-        className="absolute -bottom-8 -left-3 z-20 rounded-2xl bg-[#14213D] p-5 text-white shadow-2xl sm:-left-10"
+        className="absolute -bottom-6 -left-1 z-30 rounded-2xl bg-[#14213D] p-4 text-white shadow-2xl sm:-left-8 sm:p-5"
       >
-        <div className="flex items-center gap-4">
-          <div className="relative flex h-14 w-14 items-center justify-center rounded-full border-[5px] border-primary">
-            <span className="font-heading text-sm font-bold">92%</span>
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-12 w-12 items-center justify-center rounded-full border-[4px] border-primary sm:h-14 sm:w-14">
+            <span className="font-heading text-xs font-bold sm:text-sm">
+              92%
+            </span>
           </div>
 
           <div>
-            <p className="text-xs text-white/60">ATS Compatibility</p>
-            <p className="font-heading text-lg font-bold">Excellent</p>
+            <p className="text-[10px] text-white/60 sm:text-xs">
+              ATS Compatibility
+            </p>
+            <p className="font-heading text-sm font-bold sm:text-lg">
+              Excellent
+            </p>
           </div>
         </div>
       </motion.div>
@@ -313,7 +458,99 @@ function ResumePreview() {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                                FAQ ITEM                                    */
+/*                              AI TYPING DEMO                                */
+/* -------------------------------------------------------------------------- */
+
+function AIDemo() {
+  const input =
+    "I built a website for a local business using React and improved the website speed.";
+
+  const output =
+    "Developed and optimized a responsive business website using React, improving performance and creating a smoother user experience.";
+
+  const [typed, setTyped] = useState("");
+  const [showOutput, setShowOutput] = useState(false);
+
+  useEffect(() => {
+    let i = 0;
+
+    const timer = setInterval(() => {
+      setTyped(input.slice(0, i + 1));
+      i++;
+
+      if (i >= input.length) {
+        clearInterval(timer);
+
+        setTimeout(() => {
+          setShowOutput(true);
+        }, 500);
+      }
+    }, 18);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-3 shadow-2xl backdrop-blur sm:p-4">
+      <div className="rounded-2xl border border-white/10 bg-[#10203A] p-5 sm:p-8">
+        <div className="flex items-center gap-3 border-b border-white/10 pb-5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+            <Sparkles size={20} />
+          </div>
+
+          <div>
+            <p className="font-semibold">AI Writing Assistant</p>
+            <p className="text-xs text-white/50">
+              Improve your resume content
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-7 rounded-xl border border-white/10 bg-white/5 p-5">
+          <p className="text-xs font-semibold text-primary">YOUR INPUT</p>
+
+          <p className="mt-3 min-h-[80px] text-sm leading-relaxed text-white/65">
+            {typed}
+            {!showOutput && (
+              <span className="ml-1 inline-block h-4 w-[2px] animate-pulse bg-primary align-middle" />
+            )}
+          </p>
+        </div>
+
+        <div className="my-4 flex justify-center">
+          <motion.div
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-[#14213D]"
+          >
+            AI improves it
+          </motion.div>
+        </div>
+
+        <AnimatePresence>
+          {showOutput && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-xl border border-primary/20 bg-primary/10 p-5"
+            >
+              <p className="text-xs font-semibold text-primary">
+                SUGGESTED VERSION
+              </p>
+
+              <p className="mt-3 text-sm leading-relaxed text-white/90">
+                {output}
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                  FAQ                                      */
 /* -------------------------------------------------------------------------- */
 
 function FAQItem({
@@ -328,7 +565,7 @@ function FAQItem({
   onClick: () => void;
 }) {
   return (
-    <div className="border-b border-border">
+    <div className="border-b border-border last:border-b-0">
       <button
         onClick={onClick}
         className="flex w-full items-center justify-between gap-5 py-6 text-left"
@@ -338,7 +575,7 @@ function FAQItem({
         </span>
 
         <ChevronDown
-          className={`shrink-0 transition-transform duration-300 ${open ? "rotate-180" : ""
+          className={`shrink-0 transition-transform duration-300 ${open ? "rotate-180 text-primary" : ""
             }`}
           size={20}
         />
@@ -363,6 +600,241 @@ function FAQItem({
   );
 }
 
+function TemplateCarousel() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [displayIndex, setDisplayIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(true);
+  const [visibleSlides, setVisibleSlides] = useState(4);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  /*
+    Responsive slides:
+
+    Mobile  = 1
+    Tablet  = 2
+    Laptop  = 3
+    Desktop = 4
+  */
+
+  useEffect(() => {
+    const updateSlides = () => {
+      const width = window.innerWidth;
+
+      if (width < 640) {
+        setVisibleSlides(1);
+      } else if (width < 900) {
+        setVisibleSlides(2);
+      } else if (width < 1200) {
+        setVisibleSlides(3);
+      } else {
+        setVisibleSlides(4);
+      }
+    };
+
+    updateSlides();
+
+    window.addEventListener("resize", updateSlides);
+
+    return () => {
+      window.removeEventListener("resize", updateSlides);
+    };
+  }, []);
+
+  /*
+    AUTO SLIDE
+    Every 3 seconds
+  */
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      handleNext();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [activeIndex]);
+
+  const handleNext = () => {
+    if (activeIndex === resumeTemplates.length - 1) {
+      /*
+        Move to cloned first slide
+      */
+
+      setDisplayIndex(resumeTemplates.length);
+      setActiveIndex(0);
+    } else {
+      setDisplayIndex((prev) => prev + 1);
+      setActiveIndex((prev) => prev + 1);
+    }
+  };
+
+  /*
+    After reaching clone
+    Instantly reset to first slide
+  */
+
+  const handleTransitionEnd = () => {
+    if (displayIndex === resumeTemplates.length) {
+      setIsTransitioning(false);
+      setDisplayIndex(0);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsTransitioning(true);
+        });
+      });
+    }
+  };
+
+  /*
+    Dot click
+  */
+
+  const handleDotClick = (index: number) => {
+    setIsTransitioning(true);
+    setActiveIndex(index);
+    setDisplayIndex(index);
+  };
+
+  /*
+    Clone first slides
+    Required for infinite loop
+  */
+
+  const carouselItems = [
+    ...resumeTemplates,
+    ...resumeTemplates.slice(0, visibleSlides),
+  ];
+
+  return (
+    <div className="relative">
+      {/* ================= CAROUSEL ================= */}
+
+      <div
+        ref={containerRef}
+        className="overflow-hidden px-1 py-4"
+      >
+        <motion.div
+          animate={{
+            x: `-${(displayIndex * 100) / visibleSlides}%`,
+          }}
+          transition={
+            isTransitioning
+              ? {
+                duration: 0.75,
+                ease: [0.22, 1, 0.36, 1],
+              }
+              : {
+                duration: 0,
+              }
+          }
+          onAnimationComplete={handleTransitionEnd}
+          className="flex"
+        >
+          {carouselItems.map((template, index) => (
+            <div
+              key={`${template.id}-${index}`}
+              style={{
+                width: `${100 / visibleSlides}%`,
+              }}
+              className="shrink-0 px-2 sm:px-3"
+            >
+              <div className="group relative">
+                {/* Template Card */}
+
+                <div className="relative overflow-hidden rounded-xl border border-border bg-card shadow-lg transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-2xl">
+
+                  {/* Image */}
+
+                  <div className="relative aspect-[3/4] overflow-hidden bg-secondary">
+                    <Image
+                      src={template.image}
+                      alt={template.name}
+                      fill
+                      sizes="
+                        (max-width: 639px) 90vw,
+                        (max-width: 899px) 45vw,
+                        (max-width: 1199px) 30vw,
+                        24vw
+                      "
+                      className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
+                    />
+
+                    {/* Hover Overlay */}
+
+                    <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-[#14213D]/80 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <Link
+                        href="/sign-up"
+                        className="mb-6 flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#14213D] shadow-xl transition hover:scale-105"
+                      >
+                        <LayoutTemplate size={17} />
+                        Use Template
+                      </Link>
+                    </div>
+
+                  </div>
+
+                  {/* Bottom */}
+
+                  <div className="flex items-center justify-between p-4">
+                    <div>
+                      <h3 className="font-heading text-sm font-bold text-foreground sm:text-base">
+                        {template.name}
+                      </h3>
+
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Professional Resume
+                      </p>
+                    </div>
+
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      <ArrowRight size={17} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      {/* ================= DOTS ================= */}
+
+      <div className="mt-6 flex flex-wrap justify-center gap-2 px-4">
+        {resumeTemplates.map((template, index) => (
+          <button
+            key={template.id}
+            onClick={() => handleDotClick(index)}
+            aria-label={`Go to ${template.name}`}
+            className={`h-2.5 rounded-full transition-all duration-300 ${activeIndex === index
+              ? "w-7 bg-[#14213D]"
+              : "w-2.5 bg-muted-foreground/30 hover:bg-primary"
+              }`}
+          />
+        ))}
+      </div>
+
+      {/* ================= TEMPLATE COUNTER ================= */}
+
+      {/* ================= CTA ================= */}
+
+      <div className="mt-9 text-center">
+        <Link
+          href="/sign-up"
+          className="group inline-flex items-center gap-2 rounded-xl border-2 border-[#14213D] bg-card px-7 py-4 font-bold text-[#14213D] transition-all duration-300 hover:bg-[#14213D] hover:text-white"
+        >
+          View All Resume Templates
+
+          <ArrowRight
+            size={18}
+            className="transition-transform duration-300 group-hover:translate-x-1"
+          />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /*                               MAIN PAGE                                    */
 /* -------------------------------------------------------------------------- */
@@ -370,18 +842,43 @@ function FAQItem({
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFAQ, setOpenFAQ] = useState<number | null>(0);
+  const [activeSection, setActiveSection] = useState("");
 
   const { scrollYProgress } = useScroll();
-  const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.96]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.97]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = navLinks
+        .map((item) => document.querySelector(item.href))
+        .filter(Boolean);
+
+      let current = "";
+
+      sections.forEach((section) => {
+        const element = section as HTMLElement;
+
+        if (window.scrollY >= element.offsetTop - 150) {
+          current = `#${element.id}`;
+        }
+      });
+
+      setActiveSection(current);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll();
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-background text-foreground">
-      {/* ================================================================== */}
-      {/* NAVBAR */}
-      {/* ================================================================== */}
+    <main className="min-h-screen overflow-x-hidden bg-background pt-20 text-foreground">
+      <ScrollProgress />
 
-      <header className="sticky top-0 z-50 border-b border-border/70 bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+      {/* NAVBAR */}
+      <header className="fixed left-0 top-0 z-50 w-full border-b border-border/70 bg-background/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:h-20 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#14213D] text-primary">
               <FileText size={18} />
@@ -397,7 +894,10 @@ export default function LandingPage() {
               <a
                 key={item.name}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
+                className={`text-sm font-medium transition ${activeSection === item.href
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+                  }`}
               >
                 {item.name}
               </a>
@@ -426,6 +926,7 @@ export default function LandingPage() {
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle navigation menu"
             className="flex h-10 w-10 items-center justify-center rounded-lg border border-border sm:hidden"
           >
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -440,13 +941,13 @@ export default function LandingPage() {
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden border-t border-border bg-background sm:hidden"
             >
-              <div className="space-y-1 px-6 py-5">
+              <div className="space-y-1 px-4 py-5">
                 {navLinks.map((item) => (
                   <a
                     key={item.name}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block rounded-lg px-3 py-3 text-sm font-medium hover:bg-secondary"
+                    className="block rounded-xl px-4 py-3 text-sm font-medium transition hover:bg-secondary"
                   >
                     {item.name}
                   </a>
@@ -455,14 +956,14 @@ export default function LandingPage() {
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <Link
                     href="/sign-in"
-                    className="rounded-lg border border-border px-4 py-3 text-center text-sm font-semibold"
+                    className="rounded-xl border border-border px-4 py-3 text-center text-sm font-semibold"
                   >
                     Log in
                   </Link>
 
                   <Link
                     href="/sign-up"
-                    className="rounded-lg bg-primary px-4 py-3 text-center text-sm font-bold"
+                    className="rounded-xl bg-primary px-4 py-3 text-center text-sm font-bold text-[#14213D]"
                   >
                     Start Free
                   </Link>
@@ -473,26 +974,23 @@ export default function LandingPage() {
         </AnimatePresence>
       </header>
 
-      {/* ================================================================== */}
       {/* HERO */}
-      {/* ================================================================== */}
-
       <section className="relative">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute left-1/2 top-0 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute left-1/2 top-0 h-[400px] w-[600px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl sm:h-[500px] sm:w-[700px]" />
           <div className="absolute -left-32 top-40 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
         </div>
 
         <motion.div
           style={{ scale: heroScale }}
-          className="relative mx-auto grid max-w-7xl items-center gap-16 px-6 pb-28 pt-20 lg:grid-cols-2 lg:pb-36 lg:pt-28"
+          className="relative mx-auto grid max-w-7xl items-center gap-16 px-4 pb-24 pt-16 sm:px-6 sm:pb-28 sm:pt-20 lg:grid-cols-2 lg:px-8 lg:pb-36 lg:pt-28"
         >
           <div>
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-bold tracking-wider text-primary"
+              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-[10px] font-bold tracking-[0.12em] text-primary sm:text-xs"
             >
               <Sparkles size={14} />
               AI-POWERED CAREER TOOL
@@ -502,23 +1000,11 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.1 }}
-              className="mt-6 font-heading text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl"
+              className="mt-6 font-heading text-4xl font-bold leading-[1.06] tracking-tight xs:text-5xl sm:text-6xl lg:text-7xl"
             >
               Build a resume that{" "}
               <span className="relative text-primary">
                 gets noticed.
-                <svg
-                  className="absolute -bottom-3 left-0 w-full"
-                  viewBox="0 0 300 20"
-                  fill="none"
-                >
-                  <path
-                    d="M4 15C70 2 160 2 296 10"
-                    stroke="currentColor"
-                    strokeWidth="5"
-                    strokeLinecap="round"
-                  />
-                </svg>
               </span>
             </motion.h1>
 
@@ -526,7 +1012,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.65, delay: 0.2 }}
-              className="mt-8 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl"
+              className="mt-7 max-w-xl text-base leading-relaxed text-muted-foreground sm:mt-8 sm:text-xl"
             >
               Create, improve, and tailor your resume with AI. Get smarter
               suggestions, understand your ATS compatibility, and match your
@@ -558,39 +1044,127 @@ export default function LandingPage() {
               </a>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted-foreground"
-            >
-              <span className="flex items-center gap-2">
-                <CheckCircle2 size={17} className="text-primary" />
-                No credit card required
-              </span>
-
-              <span className="flex items-center gap-2">
-                <CheckCircle2 size={17} className="text-primary" />
-                Start in minutes
-              </span>
-
-              <span className="flex items-center gap-2">
-                <CheckCircle2 size={17} className="text-primary" />
-                Built for job seekers
-              </span>
-            </motion.div>
+            <div className="mt-8 flex flex-wrap gap-x-5 gap-y-3 text-xs text-muted-foreground sm:text-sm">
+              {[
+                "No credit card required",
+                "Start in minutes",
+                "Built for job seekers",
+              ].map((item) => (
+                <span key={item} className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-primary" />
+                  {item}
+                </span>
+              ))}
+            </div>
           </div>
 
-          <div className="pt-10 lg:pt-0">
-            <ResumePreview />
+          <div className="relative pt-10 lg:pt-0">
+
+            {/* Background Glow */}
+            <div className="absolute left-1/2 top-1/2 h-[400px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-3xl" />
+
+            {/* Main Dashboard Image */}
+            <motion.div
+              initial={{ opacity: 0, x: 40, y: 20 }}
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="relative z-10 overflow-hidden rounded-3xl border border-border bg-card shadow-2xl"
+            >
+              <Image
+                src="/images/hero/hero-dashboard.png.png"
+                alt="ResumeAI Dashboard"
+                width={700}
+                height={900}
+                className="h-auto w-full object-cover"
+                priority
+              />
+            </motion.div>
+
+
+            {/* Floating ATS Score Card */}
+            <motion.div
+              animate={{ y: [0, -12, 0] }}
+              transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute -left-4 top-96 z-20 hidden rounded-2xl border border-border bg-card p-4 shadow-xl hidden sm:block"
+            >
+              <div className="flex items-center gap-3">
+
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <BarChart3 size={20} />
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    ATS Score
+                  </p>
+
+                  <p className="font-heading text-lg font-bold text-foreground">
+                    92%
+                  </p>
+                </div>
+
+              </div>
+            </motion.div>
+
+
+            {/* Floating Job Match Card */}
+            <motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{
+                duration: 4.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute -bottom-6 -right-3 z-20 hidden rounded-2xl bg-[#14213D] p-4 text-white shadow-2xl sm:block"
+            >
+              <div className="flex items-center gap-3">
+
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-[#14213D]">
+                  <Target size={19} />
+                </div>
+
+                <div>
+                  <p className="text-xs text-white/60">
+                    Job Match
+                  </p>
+
+                  <p className="font-heading text-base font-bold">
+                    87% Match
+                  </p>
+                </div>
+
+              </div>
+            </motion.div>
+
+
+            {/* Small AI Badge */}
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{
+                duration: 3.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+              className="absolute -right-3 top-1/3 z-20 hidden rounded-xl border border-border bg-card px-4 py-3 shadow-lg md:block"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-primary" />
+
+                <span className="text-xs font-bold">
+                  AI Optimized
+                </span>
+              </div>
+            </motion.div>
+
           </div>
         </motion.div>
       </section>
 
-      {/* ================================================================== */}
       {/* MARQUEE */}
-      {/* ================================================================== */}
-
       <section className="border-y border-border bg-secondary/50 py-5">
         <div className="overflow-hidden">
           <motion.div
@@ -615,45 +1189,57 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ================================================================== */}
       {/* STATS */}
-      {/* ================================================================== */}
-
       <section className="border-b border-border">
         <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-y border-x border-border sm:grid-cols-4 sm:divide-y-0">
-          {[
-            ["AI-powered", "Writing help"],
-            ["ATS-focused", "Resume insights"],
-            ["10+", "Resume templates"],
-            ["PDF", "Ready to export"],
-          ].map(([number, label]) => (
-            <div key={label} className="p-7 text-center sm:p-10">
-              <p className="font-heading text-2xl font-bold text-[#14213D] sm:text-3xl">
-                {number}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground sm:text-sm">
-                {label}
-              </p>
-            </div>
-          ))}
+          <div className="p-6 text-center sm:p-10">
+            <p className="font-heading text-2xl font-bold text-[#14213D] sm:text-3xl">
+              AI
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Writing assistance
+            </p>
+          </div>
+
+          <div className="p-6 text-center sm:p-10">
+            <p className="font-heading text-2xl font-bold text-[#14213D] sm:text-3xl">
+              ATS
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Resume insights
+            </p>
+          </div>
+
+          <div className="p-6 text-center sm:p-10">
+            <p className="font-heading text-2xl font-bold text-[#14213D] sm:text-3xl">
+              <AnimatedCounter value={10} suffix="+" />
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Resume templates
+            </p>
+          </div>
+
+          <div className="p-6 text-center sm:p-10">
+            <p className="font-heading text-2xl font-bold text-[#14213D] sm:text-3xl">
+              PDF
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Ready to export
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* ================================================================== */}
       {/* HOW IT WORKS */}
-      {/* ================================================================== */}
-
-      <section id="how-it-works" className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6">
+      <section id="how-it-works" className="scroll-mt-24 py-20 sm:py-28 lg:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             badge="SIMPLE PROCESS"
             title="From blank page to job-ready resume"
             description="No complicated setup. ResumeAI guides you through the important steps."
           />
 
-          <div className="relative grid gap-6 md:grid-cols-3">
-            <div className="absolute left-[16%] right-[16%] top-16 hidden h-px bg-border md:block" />
-
+          <div className="relative grid gap-5 md:grid-cols-3">
             {[
               {
                 step: "01",
@@ -671,16 +1257,16 @@ export default function LandingPage() {
                 step: "03",
                 icon: Rocket,
                 title: "Review and apply",
-                desc: "Check your resume, tailor it to a job, choose a template, and export when you are ready.",
+                desc: "Check your resume, tailor it to a job, choose a template, and export when ready.",
               },
             ].map((item, index) => {
               const Icon = item.icon;
 
               return (
                 <FadeIn key={item.step} delay={index * 0.12}>
-                  <div className="relative rounded-2xl border border-border bg-card p-8 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
-                    <div className="relative z-10 mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#14213D] text-primary shadow-lg">
-                      <Icon size={27} />
+                  <div className="group relative h-full rounded-2xl border border-border bg-card p-7 transition duration-300 hover:-translate-y-2 hover:border-primary/30 hover:shadow-xl sm:p-8">
+                    <div className="mb-7 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#14213D] text-primary shadow-lg transition group-hover:scale-110">
+                      <Icon size={25} />
                     </div>
 
                     <span className="absolute right-7 top-7 font-heading text-sm font-bold text-primary">
@@ -702,12 +1288,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ================================================================== */}
-      {/* PRODUCT SHOWCASE */}
-      {/* ================================================================== */}
-
-      <section className="bg-[#14213D] py-24 text-white sm:py-32">
-        <div className="mx-auto grid max-w-7xl items-center gap-16 px-6 lg:grid-cols-2">
+      {/* AI SHOWCASE */}
+      <section className="bg-[#14213D] py-20 text-white sm:py-28 lg:py-32">
+        <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
           <FadeIn>
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold tracking-wider text-primary">
@@ -723,8 +1306,8 @@ export default function LandingPage() {
 
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/65">
                 You do not need to be a professional writer. Describe your
-                experience, projects, or responsibilities and use AI to help
-                turn them into clearer resume content.
+                experience, projects, or responsibilities and let AI help turn
+                them into clearer resume content.
               </p>
 
               <div className="mt-8 space-y-4">
@@ -736,7 +1319,7 @@ export default function LandingPage() {
                 ].map((item) => (
                   <div key={item} className="flex items-center gap-3">
                     <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[#14213D]">
-                      <CheckCircle2 size={15} />
+                      <Check size={15} />
                     </div>
                     <span className="text-sm text-white/85">{item}</span>
                   </div>
@@ -754,61 +1337,14 @@ export default function LandingPage() {
           </FadeIn>
 
           <FadeIn delay={0.15}>
-            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl backdrop-blur">
-              <div className="rounded-2xl border border-white/10 bg-[#10203A] p-6 sm:p-8">
-                <div className="flex items-center gap-3 border-b border-white/10 pb-5">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
-                    <Sparkles size={20} />
-                  </div>
-
-                  <div>
-                    <p className="font-semibold">AI Writing Assistant</p>
-                    <p className="text-xs text-white/50">
-                      Improve your resume content
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-7 rounded-xl border border-white/10 bg-white/5 p-5">
-                  <p className="text-xs font-semibold text-primary">
-                    YOUR INPUT
-                  </p>
-
-                  <p className="mt-3 text-sm leading-relaxed text-white/65">
-                    I built a website for a local business using React and
-                    improved the website speed.
-                  </p>
-                </div>
-
-                <div className="my-4 flex justify-center">
-                  <div className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-[#14213D]">
-                    AI improves it
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-primary/20 bg-primary/10 p-5">
-                  <p className="text-xs font-semibold text-primary">
-                    SUGGESTED VERSION
-                  </p>
-
-                  <p className="mt-3 text-sm leading-relaxed text-white/90">
-                    Developed and optimized a responsive business website,
-                    improving performance and creating a smoother user
-                    experience.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <AIDemo />
           </FadeIn>
         </div>
       </section>
 
-      {/* ================================================================== */}
       {/* FEATURES */}
-      {/* ================================================================== */}
-
-      <section id="features" className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6">
+      <section id="features" className="scroll-mt-24 py-20 sm:py-28 lg:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             badge="BUILT FOR JOB SEEKERS"
             title="Everything you need. Nothing you don't."
@@ -833,11 +1369,6 @@ export default function LandingPage() {
                     <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                       {feature.desc}
                     </p>
-
-                    <div className="mt-6 flex items-center gap-2 text-sm font-bold text-[#14213D] opacity-0 transition group-hover:opacity-100">
-                      Learn more
-                      <ArrowRight size={15} />
-                    </div>
                   </div>
                 </FadeIn>
               );
@@ -846,135 +1377,65 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ================================================================== */}
-      {/* ATS SCORE */}
-      {/* ================================================================== */}
+      {/* BEFORE AFTER */}
+      <section className="border-y border-border bg-secondary/50 py-20 sm:py-28">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            badge="SMART IMPROVEMENTS"
+            title="See the difference AI can make"
+            description="Transform unclear descriptions into stronger, more professional resume content."
+          />
 
-      <section className="border-y border-border bg-secondary/50 py-24 sm:py-32">
-        <div className="mx-auto grid max-w-7xl items-center gap-16 px-6 lg:grid-cols-2">
-          <FadeIn>
-            <div className="rounded-3xl border border-border bg-card p-6 shadow-xl sm:p-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-heading text-lg font-bold">
-                    Resume Analysis
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    See where your resume can improve
-                  </p>
-                </div>
-
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border-[6px] border-primary">
-                  <span className="font-heading text-sm font-bold">82</span>
-                </div>
-              </div>
-
-              <div className="mt-8 space-y-6">
-                {[
-                  ["Content clarity", "92%"],
-                  ["Skills relevance", "84%"],
-                  ["Keyword coverage", "78%"],
-                  ["Resume structure", "88%"],
-                ].map(([label, score], index) => (
-                  <div key={label}>
-                    <div className="mb-2 flex justify-between text-sm">
-                      <span className="font-medium">{label}</span>
-                      <span className="font-bold text-primary">{score}</span>
-                    </div>
-
-                    <div className="h-2 overflow-hidden rounded-full bg-secondary">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{
-                          width: ["92%", "84%", "78%", "88%"][index],
-                        }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 1, delay: index * 0.15 }}
-                        className="h-full rounded-full bg-primary"
-                      />
-                    </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <FadeIn>
+              <div className="rounded-3xl border border-border bg-card p-7 sm:p-10">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-500">
+                    <X size={20} />
                   </div>
-                ))}
-              </div>
-
-              <div className="mt-8 rounded-xl border border-green-500/20 bg-green-500/5 p-4">
-                <div className="flex gap-3">
-                  <CircleCheck
-                    className="mt-0.5 text-green-600"
-                    size={18}
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Your resume has a strong structure. Consider adding more
-                    relevant keywords for the target role.
-                  </p>
+                  <div>
+                    <p className="font-heading font-bold">Before</p>
+                    <p className="text-xs text-muted-foreground">
+                      Basic description
+                    </p>
+                  </div>
                 </div>
+
+                <p className="mt-8 rounded-xl bg-secondary p-5 leading-relaxed text-muted-foreground">
+                  I worked on websites for clients and helped make them look
+                  better.
+                </p>
               </div>
-            </div>
-          </FadeIn>
+            </FadeIn>
 
-          <FadeIn delay={0.15}>
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-xs font-bold tracking-wider text-primary">
-                <BarChart3 size={14} />
-                SMARTER FEEDBACK
+            <FadeIn delay={0.1}>
+              <div className="rounded-3xl border-2 border-primary bg-card p-7 shadow-xl sm:p-10">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <p className="font-heading font-bold">AI Improved</p>
+                    <p className="text-xs text-muted-foreground">
+                      Clear and professional
+                    </p>
+                  </div>
+                </div>
+
+                <p className="mt-8 rounded-xl border border-primary/20 bg-primary/10 p-5 leading-relaxed">
+                  Designed and optimized responsive websites for clients,
+                  improving visual presentation and creating a smoother user
+                  experience across devices.
+                </p>
               </div>
-
-              <h2 className="mt-6 font-heading text-4xl font-bold leading-tight sm:text-5xl">
-                Know what is working.
-                <br />
-                <span className="text-primary">Fix what isn't.</span>
-              </h2>
-
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-                Instead of guessing whether your resume is good enough, review
-                key areas and get practical feedback on what you can improve.
-              </p>
-
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                {[
-                  {
-                    icon: Search,
-                    text: "Find missing keywords",
-                  },
-                  {
-                    icon: Target,
-                    text: "Understand job relevance",
-                  },
-                  {
-                    icon: FileText,
-                    text: "Review structure",
-                  },
-                  {
-                    icon: TrendingUp,
-                    text: "Track improvements",
-                  },
-                ].map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <div
-                      key={item.text}
-                      className="flex items-center gap-3 rounded-xl border border-border bg-card p-4"
-                    >
-                      <div className="text-primary">
-                        <Icon size={20} />
-                      </div>
-                      <span className="text-sm font-semibold">{item.text}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </FadeIn>
+            </FadeIn>
+          </div>
         </div>
       </section>
 
-      {/* ================================================================== */}
       {/* JOB MATCH */}
-      {/* ================================================================== */}
-
-      <section className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6">
+      <section className="py-20 sm:py-28 lg:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <FadeIn>
             <div className="overflow-hidden rounded-3xl border border-border bg-card">
               <div className="grid lg:grid-cols-[1fr_1.2fr]">
@@ -992,13 +1453,13 @@ export default function LandingPage() {
                   </p>
 
                   <div className="mt-8 flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-[#14213D]">
-                      <Target size={20} />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-[#14213D]">
+                      <Target size={21} />
                     </div>
 
                     <div>
                       <p className="text-xs text-white/50">Example match</p>
-                      <p className="font-heading text-lg font-bold">
+                      <p className="font-heading text-xl font-bold">
                         84% relevance
                       </p>
                     </div>
@@ -1055,131 +1516,39 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ================================================================== */}
       {/* TEMPLATES */}
-      {/* ================================================================== */}
+      <section
+        id="templates"
+        className="relative overflow-hidden bg-secondary/50 py-20 sm:py-24 lg:py-32"
+      >
+        {/* Background Glow */}
 
-      <section id="templates" className="bg-secondary/50 py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6">
-          <SectionHeading
-            badge="FLEXIBLE DESIGN"
-            title="One resume. Multiple professional looks."
-            description="Choose a template that matches your style and switch designs whenever you want."
-          />
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute left-1/2 top-0 h-96 w-[700px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {[
-              {
-                name: "Minimal",
-                color: "#FFFFFF",
-                accent: "#14213D",
-              },
-              {
-                name: "Modern",
-                color: "#14213D",
-                accent: "#E3A008",
-              },
-              {
-                name: "Professional",
-                color: "#FFFFFF",
-                accent: "#E3A008",
-              },
-            ].map((template, index) => (
-              <FadeIn key={template.name} delay={index * 0.1}>
-                <div className="group rounded-2xl border border-border bg-card p-5 transition duration-300 hover:-translate-y-2 hover:shadow-2xl">
-                  <div
-                    className="aspect-[3/4] overflow-hidden rounded-xl border border-border p-6 transition duration-500 group-hover:scale-[1.02]"
-                    style={{ backgroundColor: template.color }}
-                  >
-                    <div
-                      className="h-3 w-1/2 rounded"
-                      style={{ backgroundColor: template.accent }}
-                    />
+        <div className="relative mx-auto max-w-[1600px]">
 
-                    <div
-                      className="mt-3 h-2 w-1/3 rounded"
-                      style={{
-                        backgroundColor:
-                          template.color === "#14213D"
-                            ? "#FFFFFF55"
-                            : "#E3A008",
-                      }}
-                    />
+          {/* Heading */}
 
-                    <div className="mt-8 space-y-3">
-                      {[100, 85, 92, 70].map((width, i) => (
-                        <div
-                          key={i}
-                          className="h-2 rounded"
-                          style={{
-                            width: `${width}%`,
-                            backgroundColor:
-                              template.color === "#14213D"
-                                ? "#FFFFFF22"
-                                : "#E5E4DE",
-                          }}
-                        />
-                      ))}
-                    </div>
-
-                    <div
-                      className="mt-8 h-2 w-24 rounded"
-                      style={{ backgroundColor: template.accent }}
-                    />
-
-                    <div className="mt-4 space-y-3">
-                      {[90, 100, 75, 85, 60].map((width, i) => (
-                        <div
-                          key={i}
-                          className="h-2 rounded"
-                          style={{
-                            width: `${width}%`,
-                            backgroundColor:
-                              template.color === "#14213D"
-                                ? "#FFFFFF22"
-                                : "#E5E4DE",
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-5">
-                    <div>
-                      <p className="font-heading font-bold">{template.name}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Professional layout
-                      </p>
-                    </div>
-
-                    <LayoutTemplate
-                      size={18}
-                      className="text-muted-foreground transition group-hover:text-primary"
-                    />
-                  </div>
-                </div>
-              </FadeIn>
-            ))}
+          <div className="px-6">
+            <SectionHeading
+              badge="CHOOSE YOUR STYLE"
+              title="Professional templates for every career"
+              description="Choose from professionally designed resume templates and find the style that fits your career."
+            />
           </div>
 
-          <div className="mt-10 text-center">
-            <Link
-              href="/sign-up"
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-semibold transition hover:bg-secondary"
-            >
-              Explore templates
-              <ArrowRight size={17} />
-            </Link>
-          </div>
+          {/* Carousel */}
+
+          <TemplateCarousel />
+
         </div>
       </section>
 
-      {/* ================================================================== */}
       {/* TESTIMONIALS */}
-      {/* ================================================================== */}
-
-      <section className="py-24 sm:py-32">
-        <div className="mx-auto max-w-7xl px-6">
+      <section className="py-20 sm:py-28 lg:py-32">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             badge="BUILT TO MAKE THE PROCESS EASIER"
             title="A simpler way to build your next resume"
@@ -1189,7 +1558,7 @@ export default function LandingPage() {
           <div className="grid gap-6 lg:grid-cols-3">
             {testimonials.map((testimonial, index) => (
               <FadeIn key={testimonial.name} delay={index * 0.1}>
-                <div className="relative h-full rounded-2xl border border-border bg-card p-7">
+                <div className="relative h-full rounded-2xl border border-border bg-card p-7 transition hover:-translate-y-1 hover:shadow-lg">
                   <Quote className="text-primary/30" size={42} />
 
                   <p className="mt-5 leading-relaxed text-muted-foreground">
@@ -1221,12 +1590,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ================================================================== */}
       {/* PRICING */}
-      {/* ================================================================== */}
-
-      <section id="pricing" className="border-y border-border bg-secondary/50 py-24 sm:py-32">
-        <div className="mx-auto max-w-5xl px-6">
+      <section id="pricing" className="scroll-mt-24 border-y border-border bg-secondary/50 py-20 sm:py-28 lg:py-32">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             badge="SIMPLE PRICING"
             title="Start free. Upgrade when you need more."
@@ -1235,7 +1601,7 @@ export default function LandingPage() {
 
           <div className="grid gap-6 md:grid-cols-2">
             <FadeIn>
-              <div className="h-full rounded-3xl border border-border bg-card p-8">
+              <div className="h-full rounded-3xl border border-border bg-card p-7 sm:p-8">
                 <h3 className="font-heading text-2xl font-bold">Free</h3>
 
                 <p className="mt-2 text-muted-foreground">
@@ -1278,7 +1644,7 @@ export default function LandingPage() {
             </FadeIn>
 
             <FadeIn delay={0.1}>
-              <div className="relative h-full rounded-3xl border-2 border-primary bg-card p-8 shadow-2xl">
+              <div className="relative h-full rounded-3xl border-2 border-primary bg-card p-7 shadow-2xl sm:p-8">
                 <div className="absolute -top-3 left-8 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-[#14213D]">
                   MOST POPULAR
                 </div>
@@ -1327,19 +1693,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ================================================================== */}
       {/* FAQ */}
-      {/* ================================================================== */}
-
-      <section className="py-24 sm:py-32">
-        <div className="mx-auto max-w-3xl px-6">
+      <section className="py-20 sm:py-28 lg:py-32">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <SectionHeading
             badge="QUESTIONS"
             title="Frequently asked questions"
             description="Everything you need to know before getting started."
           />
 
-          <div className="rounded-2xl border border-border bg-card px-6 sm:px-8">
+          <div className="rounded-2xl border border-border bg-card px-5 sm:px-8">
             {faqs.map((faq, index) => (
               <FAQItem
                 key={faq.question}
@@ -1355,12 +1718,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ================================================================== */}
       {/* FINAL CTA */}
-      {/* ================================================================== */}
-
-      <section className="px-6 pb-24 sm:pb-32">
-        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-[#14213D] px-6 py-20 text-center text-white sm:px-12 sm:py-24">
+      <section className="px-4 pb-24 sm:px-6 sm:pb-32">
+        <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-[#14213D] px-5 py-16 text-center text-white sm:px-12 sm:py-24">
           <div className="absolute left-1/2 top-0 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl" />
 
           <div className="relative mx-auto max-w-3xl">
@@ -1368,11 +1728,11 @@ export default function LandingPage() {
               <Rocket size={26} />
             </div>
 
-            <h2 className="mt-7 font-heading text-4xl font-bold leading-tight sm:text-5xl">
+            <h2 className="mt-7 font-heading text-3xl font-bold leading-tight sm:text-5xl">
               Your next opportunity starts with a stronger resume.
             </h2>
 
-            <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-white/65">
+            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-white/65 sm:text-lg">
               Start building for free and turn your experience into a resume
               that is clear, professional, and ready to share.
             </p>
@@ -1404,12 +1764,9 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ================================================================== */}
       {/* FOOTER */}
-      {/* ================================================================== */}
-
-      <footer className="border-t border-border">
-        <div className="mx-auto max-w-7xl px-6 py-12">
+      <footer className="border-t border-border pb-20 sm:pb-0">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr]">
             <div>
               <Link href="/" className="flex items-center gap-2">
@@ -1468,7 +1825,7 @@ export default function LandingPage() {
           <div className="mt-12 flex flex-col gap-3 border-t border-border pt-7 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <p>© {new Date().getFullYear()} ResumeAI. All rights reserved.</p>
 
-            <div className="flex gap-5">
+            <div className="flex gap-4">
               <span>Built for job seekers</span>
               <span>•</span>
               <span>Made with AI</span>
@@ -1476,6 +1833,17 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* MOBILE STICKY CTA */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 p-3 backdrop-blur sm:hidden">
+        <Link
+          href="/sign-up"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold text-[#14213D] shadow-lg"
+        >
+          Build My Resume Free
+          <ArrowRight size={17} />
+        </Link>
+      </div>
     </main>
   );
 }

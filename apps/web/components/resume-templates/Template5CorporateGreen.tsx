@@ -48,7 +48,7 @@ export default function Template5CorporateGreen({
                     className="rounded-full p-1 shrink-0"
                     style={{ border: `2px solid ${GREEN}` }}
                 >
-                    <InitialsAvatar fullName={personalInfo.fullName} size={60} bgColor="#DCFCE7" textColor="#14532D" />
+                    <InitialsAvatar fullName={personalInfo.fullName} photoUrl={personalInfo.photoUrl} size={60} bgColor="#DCFCE7" textColor="#14532D" />
                 </div>
             </div>
 

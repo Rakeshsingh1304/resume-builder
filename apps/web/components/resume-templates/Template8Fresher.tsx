@@ -72,7 +72,7 @@ export default function Template8Fresher({
                         )}
                     </div>
                 </div>
-                <InitialsAvatar fullName={personalInfo.fullName} size={60} bgColor={BLUE} textColor="#FFFFFF" />
+                <InitialsAvatar fullName={personalInfo.fullName} photoUrl={personalInfo.photoUrl} size={60} bgColor={BLUE} textColor="#FFFFFF" />
             </div>
 
             {summary && (
