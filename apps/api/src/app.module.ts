@@ -10,6 +10,7 @@ import { CoverLettersModule } from './cover-letters/cover-letters.module';
 import { AdminModule } from './admin/admin.module';
 import { UsersModule } from './users/users.module';
 import { PaymentsModule } from './payments/payments.module';
+import { InterviewModule } from './interview/interview.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { PaymentsModule } from './payments/payments.module';
     AdminModule,
     UsersModule,
     PaymentsModule,
+    InterviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],

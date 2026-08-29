@@ -1,4 +1,5 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
+import { normalizeUrl } from "./resume-templates/types";
 
 interface PersonalInfo {
     fullName?: string;
@@ -139,23 +140,38 @@ export default function ResumeTemplate({
                         </span>
                     )}
                     {personalInfo.website && (
-                        <span className="flex items-center gap-1.5">
+                        <a
+                            href={normalizeUrl(personalInfo.website)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 hover:underline"
+                        >
                             <Globe size={13} className="text-[#E3A008]" /> {personalInfo.website}
-                        </span>
+                        </a>
                     )}
                 </div>
 
                 {(personalInfo.linkedin || personalInfo.github) && (
                     <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-1.5 text-[13px] text-gray-700">
                         {personalInfo.linkedin && (
-                            <span className="flex items-center gap-1.5">
+                            <a
+                                href={normalizeUrl(personalInfo.linkedin)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:underline"
+                            >
                                 <Link size={13} className="text-[#E3A008]" /> {personalInfo.linkedin}
-                            </span>
+                            </a>
                         )}
                         {personalInfo.github && (
-                            <span className="flex items-center gap-1.5">
+                            <a
+                                href={normalizeUrl(personalInfo.github)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:underline"
+                            >
                                 <Link size={13} className="text-[#E3A008]" /> {personalInfo.github}
-                            </span>
+                            </a>
                         )}
                     </div>
                 )}

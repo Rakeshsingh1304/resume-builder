@@ -1,6 +1,6 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 import InitialsAvatar from "./InitialsAvatar";
-import { ResumeTemplateProps, formatDate } from "./types";
+import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
 
 const BLUE = "#3B82F6";
 
@@ -56,19 +56,34 @@ export default function Template8Fresher({
                             </span>
                         )}
                         {personalInfo.linkedin && (
-                            <span className="flex items-center gap-1.5">
+                            <a
+                                href={normalizeUrl(personalInfo.linkedin)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:underline"
+                            >
                                 <Link size={11} style={{ color: BLUE }} /> {personalInfo.linkedin}
-                            </span>
+                            </a>
                         )}
                         {personalInfo.github && (
-                            <span className="flex items-center gap-1.5">
+                            <a
+                                href={normalizeUrl(personalInfo.github)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:underline"
+                            >
                                 <Link size={11} style={{ color: BLUE }} /> {personalInfo.github}
-                            </span>
+                            </a>
                         )}
                         {personalInfo.website && (
-                            <span className="flex items-center gap-1.5">
+                            <a
+                                href={normalizeUrl(personalInfo.website)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:underline"
+                            >
                                 <Globe size={11} style={{ color: BLUE }} /> {personalInfo.website}
-                            </span>
+                            </a>
                         )}
                     </div>
                 </div>

@@ -9,6 +9,7 @@ import ResumeTemplate from "@/components/ResumeTemplate";
 import ScaledResumePreview from "@/components/ScaledResumePreview";
 import { TEMPLATES } from "@/components/resume-templates/TemplateRenderer";
 import UpgradeModal from "@/components/UpgradeModal";
+import { Plus, Link as LinkIcon } from "lucide-react";
 
 interface PersonalInfo {
     fullName?: string;
@@ -126,6 +127,7 @@ export default function ResumeBuilderPage() {
     const [subscriptionTier, setSubscriptionTier] = useState<string>("FREE");
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [photoUploading, setPhotoUploading] = useState(false);
+    const [addedOptionalFields, setAddedOptionalFields] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [generatingSummary, setGeneratingSummary] = useState(false);
@@ -193,6 +195,26 @@ export default function ResumeBuilderPage() {
 
     function updateField(field: keyof PersonalInfo, value: string) {
         setPersonalInfo((prev) => ({ ...prev, [field]: value }));
+    }
+
+    // "Add details" fields (LinkedIn, GitHub, Website) are hidden until the
+    // user either clicks "+ Add" for them, or they already have a saved
+    // value (so previously-filled fields still show up when reopening).
+    function isFieldVisible(field: keyof PersonalInfo) {
+        return addedOptionalFields.has(field) || !!personalInfo[field];
+    }
+
+    function addOptionalField(field: keyof PersonalInfo) {
+        setAddedOptionalFields((prev) => new Set(prev).add(field));
+    }
+
+    function removeOptionalField(field: keyof PersonalInfo) {
+        setAddedOptionalFields((prev) => {
+            const next = new Set(prev);
+            next.delete(field);
+            return next;
+        });
+        updateField(field, "");
     }
 
     async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -965,36 +987,116 @@ export default function ResumeBuilderPage() {
                                 placeholder="Surat, India"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1 text-foreground">LinkedIn</label>
-                            <input
-                                type="text"
-                                value={personalInfo.linkedin || ""}
-                                onChange={(e) => updateField("linkedin", e.target.value)}
-                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                                placeholder="linkedin.com/in/johndoe"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1 text-foreground">GitHub</label>
-                            <input
-                                type="text"
-                                value={personalInfo.github || ""}
-                                onChange={(e) => updateField("github", e.target.value)}
-                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                                placeholder="github.com/johndoe"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1 text-foreground">Portfolio Website</label>
-                            <input
-                                type="text"
-                                value={personalInfo.website || ""}
-                                onChange={(e) => updateField("website", e.target.value)}
-                                className="w-full border border-border rounded-md px-3 py-2 bg-background"
-                                placeholder="johndoe.com"
-                            />
-                        </div>
+
+                        {isFieldVisible("linkedin") && (
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-foreground">LinkedIn</label>
+                                    <button
+                                        onClick={() => removeOptionalField("linkedin")}
+                                        className="text-xs text-muted-foreground hover:text-destructive"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={personalInfo.linkedin || ""}
+                                        onChange={(e) => updateField("linkedin", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 pr-16 bg-background"
+                                        placeholder="linkedin.com/in/johndoe"
+                                    />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground bg-card border border-border rounded-full px-2 py-1 flex items-center gap-1 pointer-events-none">
+                                        <LinkIcon size={12} /> Link
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        {isFieldVisible("github") && (
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-foreground">GitHub</label>
+                                    <button
+                                        onClick={() => removeOptionalField("github")}
+                                        className="text-xs text-muted-foreground hover:text-destructive"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={personalInfo.github || ""}
+                                        onChange={(e) => updateField("github", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 pr-16 bg-background"
+                                        placeholder="github.com/johndoe"
+                                    />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground bg-card border border-border rounded-full px-2 py-1 flex items-center gap-1 pointer-events-none">
+                                        <LinkIcon size={12} /> Link
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        {isFieldVisible("website") && (
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-foreground">Portfolio Website</label>
+                                    <button
+                                        onClick={() => removeOptionalField("website")}
+                                        className="text-xs text-muted-foreground hover:text-destructive"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={personalInfo.website || ""}
+                                        onChange={(e) => updateField("website", e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 pr-16 bg-background"
+                                        placeholder="johndoe.com"
+                                    />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground bg-card border border-border rounded-full px-2 py-1 flex items-center gap-1 pointer-events-none">
+                                        <LinkIcon size={12} /> Link
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+
+                        {(!isFieldVisible("linkedin") || !isFieldVisible("github") || !isFieldVisible("website")) && (
+                            <div>
+                                <p className="text-sm font-medium text-foreground mb-2">Add details</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {!isFieldVisible("linkedin") && (
+                                        <button
+                                            onClick={() => addOptionalField("linkedin")}
+                                            className="text-sm border border-border rounded-full px-3 py-1.5 hover:bg-muted transition flex items-center gap-1"
+                                        >
+                                            <Plus size={14} /> LinkedIn
+                                        </button>
+                                    )}
+                                    {!isFieldVisible("github") && (
+                                        <button
+                                            onClick={() => addOptionalField("github")}
+                                            className="text-sm border border-border rounded-full px-3 py-1.5 hover:bg-muted transition flex items-center gap-1"
+                                        >
+                                            <Plus size={14} /> GitHub
+                                        </button>
+                                    )}
+                                    {!isFieldVisible("website") && (
+                                        <button
+                                            onClick={() => addOptionalField("website")}
+                                            className="text-sm border border-border rounded-full px-3 py-1.5 hover:bg-muted transition flex items-center gap-1"
+                                        >
+                                            <Plus size={14} /> Portfolio Website
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 

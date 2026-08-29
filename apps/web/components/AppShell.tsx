@@ -9,6 +9,7 @@ import { apiFetch } from "@/lib/api";
 const baseNavItems = [
     { label: "My Resumes", href: "/dashboard" },
     { label: "Cover Letters", href: "/cover-letters" },
+    { label: "AI Interview", href: "/interview" },
 ];
 
 const adminNavItem = { label: "Admin", href: "/admin" };

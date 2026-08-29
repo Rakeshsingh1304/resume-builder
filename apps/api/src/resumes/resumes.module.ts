@@ -8,5 +8,6 @@ import { AiModule } from '../ai/ai.module';
   imports: [AiModule],
   controllers: [ResumesController, PublicResumesController],
   providers: [ResumesService],
+  exports: [ResumesService],
 })
 export class ResumesModule { }

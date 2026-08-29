@@ -1,5 +1,5 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
-import { ResumeTemplateProps, formatDate } from "./types";
+import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
 
 const GREY = "#6B7280";
 
@@ -55,22 +55,37 @@ export default function Template6MinimalGrey({
                         </span>
                     )}
                     {personalInfo.website && (
-                        <span className="flex items-center gap-1.5">
+                        <a
+                            href={normalizeUrl(personalInfo.website)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 hover:underline"
+                        >
                             <Globe size={12} style={{ color: GREY }} /> {personalInfo.website}
-                        </span>
+                        </a>
                     )}
                 </div>
                 {(personalInfo.linkedin || personalInfo.github) && (
                     <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-1.5 text-[12px] text-gray-600">
                         {personalInfo.linkedin && (
-                            <span className="flex items-center gap-1.5">
+                            <a
+                                href={normalizeUrl(personalInfo.linkedin)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:underline"
+                            >
                                 <Link size={12} style={{ color: GREY }} /> {personalInfo.linkedin}
-                            </span>
+                            </a>
                         )}
                         {personalInfo.github && (
-                            <span className="flex items-center gap-1.5">
+                            <a
+                                href={normalizeUrl(personalInfo.github)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:underline"
+                            >
                                 <Link size={12} style={{ color: GREY }} /> {personalInfo.github}
-                            </span>
+                            </a>
                         )}
                     </div>
                 )}

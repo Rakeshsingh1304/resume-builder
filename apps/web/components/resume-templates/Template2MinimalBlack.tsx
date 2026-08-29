@@ -1,5 +1,5 @@
 import InitialsAvatar from "./InitialsAvatar";
-import { ResumeTemplateProps, formatDate } from "./types";
+import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
 
 function Heading({ children }: { children: React.ReactNode }) {
     return (
@@ -23,9 +23,9 @@ export default function Template2MinimalBlack({
     const contactLine1 = [personalInfo.phone, personalInfo.email, personalInfo.location]
         .filter(Boolean)
         .join("   |   ");
-    const contactLine2 = [personalInfo.linkedin, personalInfo.github, personalInfo.website]
-        .filter(Boolean)
-        .join("   |   ");
+    const contactLinks = [personalInfo.linkedin, personalInfo.github, personalInfo.website].filter(
+        Boolean
+    ) as string[];
 
     return (
         <div
@@ -53,7 +53,23 @@ export default function Template2MinimalBlack({
                 </div>
 
                 {contactLine1 && <p className="text-[12px] text-gray-700 mt-3">{contactLine1}</p>}
-                {contactLine2 && <p className="text-[12px] text-gray-700 mt-1">{contactLine2}</p>}
+                {contactLinks.length > 0 && (
+                    <p className="text-[12px] text-gray-700 mt-1">
+                        {contactLinks.map((link, i) => (
+                            <span key={i}>
+                                <a
+                                    href={normalizeUrl(link)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="hover:underline"
+                                >
+                                    {link}
+                                </a>
+                                {i < contactLinks.length - 1 && "   |   "}
+                            </span>
+                        ))}
+                    </p>
+                )}
             </div>
 
             {/* Summary */}

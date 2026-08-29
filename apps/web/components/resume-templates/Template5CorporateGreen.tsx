@@ -1,6 +1,6 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 import InitialsAvatar from "./InitialsAvatar";
-import { ResumeTemplateProps, formatDate } from "./types";
+import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
 
 const GREEN = "#16A34A";
 
@@ -77,22 +77,37 @@ export default function Template5CorporateGreen({
                                 </div>
                             )}
                             {personalInfo.website && (
-                                <div className="flex items-center gap-2">
+                                <a
+                                    href={normalizeUrl(personalInfo.website)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 hover:underline"
+                                >
                                     <Globe size={12} style={{ color: GREEN }} className="shrink-0" />
                                     <span className="break-all">{personalInfo.website}</span>
-                                </div>
+                                </a>
                             )}
                             {personalInfo.linkedin && (
-                                <div className="flex items-center gap-2">
+                                <a
+                                    href={normalizeUrl(personalInfo.linkedin)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 hover:underline"
+                                >
                                     <Link size={12} style={{ color: GREEN }} className="shrink-0" />
                                     <span className="break-all">{personalInfo.linkedin}</span>
-                                </div>
+                                </a>
                             )}
                             {personalInfo.github && (
-                                <div className="flex items-center gap-2">
+                                <a
+                                    href={normalizeUrl(personalInfo.github)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 hover:underline"
+                                >
                                     <Link size={12} style={{ color: GREEN }} className="shrink-0" />
                                     <span className="break-all">{personalInfo.github}</span>
-                                </div>
+                                </a>
                             )}
                         </div>
                     </div>

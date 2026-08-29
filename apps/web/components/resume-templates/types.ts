@@ -71,3 +71,15 @@ export function formatDate(dateStr?: string) {
     const date = new Date(Number(year), Number(month) - 1);
     return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
+
+// Ensures a URL always has a protocol so it actually navigates when clicked
+// (e.g. a user typing "linkedin.com/in/x" without "https://" would
+// otherwise be treated as a broken relative link on the current site).
+export function normalizeUrl(url?: string): string {
+    if (!url) return "#";
+    const trimmed = url.trim();
+    if (/^https?:\/\//i.test(trimmed) || /^mailto:/i.test(trimmed) || /^tel:/i.test(trimmed)) {
+        return trimmed;
+    }
+    return `https://${trimmed}`;
+}

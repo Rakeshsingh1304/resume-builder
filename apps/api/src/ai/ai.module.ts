@@ -6,6 +6,6 @@ import { GeminiProvider } from './providers/gemini.provider';
 @Module({
   controllers: [AiController],
   providers: [AiService, GeminiProvider],
-  exports: [AiService],
+  exports: [AiService, GeminiProvider],
 })
 export class AiModule { }
