@@ -1,6 +1,7 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 import InitialsAvatar from "./InitialsAvatar";
 import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
+import CustomSectionsRenderer from "./CustomSectionsRenderer";
 
 const GOLD = "#D4AF37";
 
@@ -25,6 +26,7 @@ export default function Template10Executive({
     certifications = [],
     languages = [],
     achievements = [],
+    customSections = [],
 }: ResumeTemplateProps) {
     return (
         <div
@@ -101,6 +103,17 @@ export default function Template10Executive({
                             >
                                 <Link size={12} style={{ color: GOLD }} className="shrink-0" />
                                 <span className="break-all">{personalInfo.github}</span>
+                            </a>
+                        )}
+                        {personalInfo.Behance && (
+                            <a
+                                href={normalizeUrl(personalInfo.Behance)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 hover:underline"
+                            >
+                                <Link size={12} style={{ color: GOLD }} className="shrink-0" />
+                                <span className="break-all">{personalInfo.Behance}</span>
                             </a>
                         )}
                     </div>
@@ -254,6 +267,7 @@ export default function Template10Executive({
                         </ul>
                     </div>
                 )}
+                <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <Heading>{title}</Heading>} textColor="#1A1A1A" />
             </div>
         </div>
     );

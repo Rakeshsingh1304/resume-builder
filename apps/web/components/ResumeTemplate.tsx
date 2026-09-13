@@ -1,5 +1,6 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 import { normalizeUrl } from "./resume-templates/types";
+import CustomSectionsRenderer from "./resume-templates/CustomSectionsRenderer";
 
 interface PersonalInfo {
     fullName?: string;
@@ -7,9 +8,33 @@ interface PersonalInfo {
     email?: string;
     phone?: string;
     location?: string;
+    linkedinUsername?: string;
     linkedin?: string;
+    githubUsername?: string;
     github?: string;
+    websiteUsername?: string;
     website?: string;
+    BehanceUsername?: string;
+    Behance?: string;
+    facebookUsername?: string;
+    facebook?: string;
+    instagramUsername?: string;
+    instagram?: string;
+    twitterUsername?: string;
+    twitter?: string;
+}
+
+interface CustomSectionEntry {
+    id: string;
+    heading?: string;
+    subheading?: string;
+    description?: string;
+}
+
+interface CustomSection {
+    id: string;
+    title: string;
+    entries: CustomSectionEntry[];
 }
 
 interface ExperienceEntry {
@@ -62,6 +87,7 @@ interface ResumeTemplateProps {
     certifications?: CertificationEntry[];
     languages?: LanguageEntry[];
     achievements?: string[];
+    customSections?: CustomSection[];
 }
 
 // Applied to anything that should NEVER be split across two printed pages
@@ -105,6 +131,7 @@ export default function ResumeTemplate({
     certifications = [],
     languages = [],
     achievements = [],
+    customSections = [],
 }: ResumeTemplateProps) {
     return (
         <div
@@ -139,40 +166,143 @@ export default function ResumeTemplate({
                             <MapPin size={13} className="text-[#E3A008]" /> {personalInfo.location}
                         </span>
                     )}
-                    {personalInfo.website && (
-                        <a
-                            href={normalizeUrl(personalInfo.website)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 hover:underline"
-                        >
-                            <Globe size={13} className="text-[#E3A008]" /> {personalInfo.website}
-                        </a>
-                    )}
+
                 </div>
 
-                {(personalInfo.linkedin || personalInfo.github) && (
+                {(personalInfo.linkedinUsername || personalInfo.githubUsername || personalInfo.websiteUsername || personalInfo.facebookUsername || personalInfo.instagramUsername || personalInfo.twitterUsername) && (
                     <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-1.5 text-[13px] text-gray-700">
-                        {personalInfo.linkedin && (
+
+                        {/* LINKEDIN */}
+                        {personalInfo.linkedinUsername && (
                             <a
                                 href={normalizeUrl(personalInfo.linkedin)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-1.5 hover:underline"
                             >
-                                <Link size={13} className="text-[#E3A008]" /> {personalInfo.linkedin}
+                                <Link size={13} className="text-[#E3A008]" />
+                                {personalInfo.linkedinUsername}
                             </a>
                         )}
-                        {personalInfo.github && (
-                            <a
-                                href={normalizeUrl(personalInfo.github)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 hover:underline"
-                            >
-                                <Link size={13} className="text-[#E3A008]" /> {personalInfo.github}
-                            </a>
+
+                        {/* GITHUB */}
+                        {personalInfo.githubUsername && (
+
+                            personalInfo.github ? (
+                                <a
+                                    href={normalizeUrl(personalInfo.github)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 hover:underline"
+                                >
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.githubUsername}
+                                </a>
+                            ) : (
+                                <span className="flex items-center gap-1.5">
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.githubUsername}
+                                </span>
+                            )
                         )}
+
+                        {/* WEBSITE */}
+                        {personalInfo.websiteUsername && (
+                            personalInfo.website ? (
+                                <a
+                                    href={normalizeUrl(personalInfo.website)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 hover:underline"
+                                >
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.websiteUsername}
+                                </a>
+                            ) : (
+                                <span className="flex items-center gap-1.5">
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.websiteUsername}
+                                </span>
+                            )
+                        )}
+
+                        {/* BEHANCE */}
+                        {personalInfo.BehanceUsername && (
+                            personalInfo.Behance ? (
+                                <a
+                                    href={normalizeUrl(personalInfo.Behance)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 hover:underline"
+                                >
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.BehanceUsername}
+                                </a>
+                            ) : (
+                                <span className="flex items-center gap-1.5">
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.BehanceUsername}
+                                </span>
+                            )
+                        )}
+                        {/* FACEBOOK */}
+                        {personalInfo.facebookUsername && (
+                            personalInfo.facebook ? (
+                                <a
+                                    href={normalizeUrl(personalInfo.facebook)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 hover:underline"
+                                >
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.facebookUsername}
+                                </a>
+                            ) : (
+                                <span className="flex items-center gap-1.5">
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.facebookUsername}
+                                </span>
+                            )
+                        )}
+                        {/* INSTAGRAM */}
+                        {personalInfo.instagramUsername && (
+                            personalInfo.instagram ? (
+                                <a
+                                    href={normalizeUrl(personalInfo.instagram)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 hover:underline"
+                                >
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.instagramUsername}
+                                </a>
+                            ) : (
+                                <span className="flex items-center gap-1.5">
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.instagramUsername}
+                                </span>
+                            )
+                        )}
+                        {/* TWITTER */}
+                        {personalInfo.twitterUsername && (
+                            personalInfo.twitter ? (
+                                <a
+                                    href={normalizeUrl(personalInfo.twitter)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 hover:underline"
+                                >
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.twitterUsername}
+                                </a>
+                            ) : (
+                                <span className="flex items-center gap-1.5">
+                                    <Link size={13} className="text-[#E3A008]" />
+                                    {personalInfo.twitterUsername}
+                                </span>
+                            )
+                        )}
+
                     </div>
                 )}
 
@@ -321,6 +451,6 @@ export default function ResumeTemplate({
                     </ul>
                 </div>
             )}
-        </div>
+            <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <SectionHeading>{title}</SectionHeading>} textColor="#14213D" />        </div>
     );
 }

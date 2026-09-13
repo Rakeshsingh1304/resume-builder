@@ -17,9 +17,20 @@ interface PersonalInfo {
     email?: string;
     phone?: string;
     location?: string;
+    linkedinUsername?: string;
     linkedin?: string;
+    githubUsername?: string;
     github?: string;
+    websiteUsername?: string;
     website?: string;
+    BehanceUsername?: string;
+    Behance?: string;
+    facebookUsername?: string;
+    facebook?: string;
+    instagramUsername?: string;
+    instagram?: string;
+    twitterUsername?: string;
+    twitter?: string;
     photoUrl?: string;
 }
 
@@ -75,6 +86,19 @@ interface ResumeContent {
     achievements?: string[];
 }
 
+interface CustomSectionEntry {
+    id: string;
+    heading?: string;
+    subheading?: string;
+    description?: string;
+}
+
+interface CustomSection {
+    id: string;
+    title: string;
+    entries: CustomSectionEntry[];
+}
+
 interface Resume {
     id: string;
     title: string;
@@ -105,6 +129,7 @@ const STEPS = [
     { key: "languages", label: "Languages" },
     { key: "achievements", label: "Achievements" },
     { key: "skills", label: "Skills" },
+    { key: "custom", label: "Additional Sections" },
     { key: "summary", label: "Summary" },
 ] as const;
 
@@ -122,12 +147,14 @@ export default function ResumeBuilderPage() {
     const [languages, setLanguages] = useState<LanguageEntry[]>([]);
     const [achievements, setAchievements] = useState<string[]>([]);
     const [achievementInput, setAchievementInput] = useState("");
+    const [customSections, setCustomSections] = useState<CustomSection[]>([]);
     const [summary, setSummary] = useState("");
     const [templateId, setTemplateId] = useState("classic");
     const [subscriptionTier, setSubscriptionTier] = useState<string>("FREE");
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [photoUploading, setPhotoUploading] = useState(false);
     const [addedOptionalFields, setAddedOptionalFields] = useState<Set<string>>(new Set());
+    const [editingLinkField, setEditingLinkField] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [generatingSummary, setGeneratingSummary] = useState(false);
@@ -153,7 +180,7 @@ export default function ResumeBuilderPage() {
     const [applyingImprovements, setApplyingImprovements] = useState(false);
 
     // ---- Wizard state ----
-    const [currentStep, setCurrentStep] = useState(0);
+    const [currentStep, setCurrentStep] = useState<number>(0);
     const formTopRef = useRef<HTMLDivElement | null>(null);
     const isFirstRender = useRef(true);
 
@@ -187,6 +214,7 @@ export default function ResumeBuilderPage() {
             setCertifications(data.content?.certifications || []);
             setLanguages(data.content?.languages || []);
             setAchievements(data.content?.achievements || []);
+            setCustomSections(data.content?.customSections || []);
             setTemplateId(data.templateId || "classic");
             setLoading(false);
         }
@@ -197,7 +225,7 @@ export default function ResumeBuilderPage() {
         setPersonalInfo((prev) => ({ ...prev, [field]: value }));
     }
 
-    // "Add details" fields (LinkedIn, GitHub, Website) are hidden until the
+    // "Add details" fields (LinkedIn, GitHub, Website, etc...) are hidden until the
     // user either clicks "+ Add" for them, or they already have a saved
     // value (so previously-filled fields still show up when reopening).
     function isFieldVisible(field: keyof PersonalInfo) {
@@ -214,7 +242,38 @@ export default function ResumeBuilderPage() {
             next.delete(field);
             return next;
         });
-        updateField(field, "");
+
+        if (field === "linkedin") {
+            updateField("linkedin", "");
+            updateField("linkedinUsername", "");
+        }
+        else if (field === "github") {
+            updateField("github", "");
+            updateField("githubUsername", "");
+        }
+        else if (field === "website") {
+            updateField("website", "");
+            updateField("websiteUsername", "");
+        }
+        else if (field === "Behance") {
+            updateField("Behance", "");
+            updateField("BehanceUsername", "");
+        }
+        else if (field === "facebook") {
+            updateField("facebook", "");
+            updateField("facebookUsername", "");
+        }
+        else if (field === "instagram") {
+            updateField("instagram", "");
+            updateField("instagramUsername", "");
+        }
+        else if (field === "twitter") {
+            updateField("twitter", "");
+            updateField("twitterUsername", "");
+        }
+        else {
+            updateField(field, "");
+        }
     }
 
     async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -357,6 +416,53 @@ export default function ResumeBuilderPage() {
         }
     }
 
+    function addCustomSection() {
+        const title = window.prompt("Write Section Name (e.g, 'Volunteer Experience', 'Publications', 'Hobbies'):");
+        if (!title || !title.trim()) return;
+        setCustomSections((prev) => [
+            ...prev,
+            { id: crypto.randomUUID(), title: title.trim(), entries: [] },
+        ]);
+    }
+
+    function removeCustomSection(sectionId: string) {
+        setCustomSections((prev) => prev.filter((s) => s.id !== sectionId));
+    }
+
+    function updateCustomSectionTitle(sectionId: string, title: string) {
+        setCustomSections((prev) =>
+            prev.map((s) => (s.id === sectionId ? { ...s, title } : s))
+        );
+    }
+
+    function addCustomEntry(sectionId: string) {
+        setCustomSections((prev) =>
+            prev.map((s) =>
+                s.id === sectionId
+                    ? { ...s, entries: [...s.entries, { id: crypto.randomUUID(), heading: "", subheading: "", description: "" }] }
+                    : s
+            )
+        );
+    }
+
+    function updateCustomEntry(sectionId: string, entryId: string, field: keyof CustomSectionEntry, value: string) {
+        setCustomSections((prev) =>
+            prev.map((s) =>
+                s.id === sectionId
+                    ? { ...s, entries: s.entries.map((e) => (e.id === entryId ? { ...e, [field]: value } : e)) }
+                    : s
+            )
+        );
+    }
+
+    function removeCustomEntry(sectionId: string, entryId: string) {
+        setCustomSections((prev) =>
+            prev.map((s) =>
+                s.id === sectionId ? { ...s, entries: s.entries.filter((e) => e.id !== entryId) } : s
+            )
+        );
+    }
+
     function addSkill() {
         const trimmed = skillInput.trim();
         if (trimmed && !skills.includes(trimmed)) {
@@ -393,7 +499,7 @@ export default function ResumeBuilderPage() {
     async function handleSave() {
         setSaving(true);
         const token = await getToken();
-        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications, languages, achievements };
+        const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications, languages, achievements, customSections };
         await apiFetch(`/api/resumes/${id}`, token, {
             method: "PATCH",
             body: JSON.stringify({ content: updatedContent }),
@@ -517,7 +623,7 @@ export default function ResumeBuilderPage() {
         setCheckingAts(true);
         const token = await getToken();
         try {
-            const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications, languages, achievements };
+            const updatedContent = { ...resume?.content, personalInfo, experience, education, skills, summary, projects, certifications, languages, achievements, customSections };
             await apiFetch(`/api/resumes/${id}`, token, {
                 method: "PATCH",
                 body: JSON.stringify({ content: updatedContent }),
@@ -991,7 +1097,10 @@ export default function ResumeBuilderPage() {
                         {isFieldVisible("linkedin") && (
                             <div>
                                 <div className="flex justify-between items-center mb-1">
-                                    <label className="block text-sm font-medium text-foreground">LinkedIn</label>
+                                    <label className="block text-sm font-medium text-foreground">
+                                        LinkedIn
+                                    </label>
+
                                     <button
                                         onClick={() => removeOptionalField("linkedin")}
                                         className="text-xs text-muted-foreground hover:text-destructive"
@@ -999,18 +1108,69 @@ export default function ResumeBuilderPage() {
                                         Remove
                                     </button>
                                 </div>
-                                <div className="relative">
+
+                                {/* USERNAME + ADD LINK BUTTON */}
+                                <div className="flex gap-2">
+
+                                    {/* USERNAME INPUT */}
                                     <input
                                         type="text"
-                                        value={personalInfo.linkedin || ""}
-                                        onChange={(e) => updateField("linkedin", e.target.value)}
-                                        className="w-full border border-border rounded-md px-3 py-2 pr-16 bg-background"
-                                        placeholder="linkedin.com/in/johndoe"
+                                        value={personalInfo.linkedinUsername || ""}
+                                        onChange={(e) =>
+                                            updateField("linkedinUsername", e.target.value)
+                                        }
+                                        placeholder="Enter your LinkedIn username"
+                                        className="flex-1 border border-border rounded-md px-3 py-2 bg-background text-sm"
                                     />
-                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground bg-card border border-border rounded-full px-2 py-1 flex items-center gap-1 pointer-events-none">
-                                        <LinkIcon size={12} /> Link
-                                    </span>
+
+                                    {/* ADD / EDIT LINK BUTTON */}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setEditingLinkField(
+                                                editingLinkField === "linkedin"
+                                                    ? null
+                                                    : "linkedin"
+                                            )
+                                        }
+                                        className="text-xs text-muted-foreground bg-card border border-border rounded-full px-3 py-2 flex items-center gap-1 hover:border-primary hover:text-primary transition whitespace-nowrap"
+                                    >
+                                        <LinkIcon size={12} />
+
+                                        {personalInfo.linkedin
+                                            ? "Edit Link"
+                                            : "Add Link"}
+                                    </button>
                                 </div>
+
+                                {/* ACTUAL LINK INPUT */}
+                                {editingLinkField === "linkedin" && (
+                                    <div className="mt-2 flex gap-2">
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            value={personalInfo.linkedin || ""}
+                                            onChange={(e) =>
+                                                updateField("linkedin", e.target.value)
+                                            }
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    setEditingLinkField(null);
+                                                }
+                                            }}
+                                            placeholder="https://linkedin.com/in/yourusername"
+                                            className="flex-1 border border-border rounded-md px-3 py-2 bg-card text-sm"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingLinkField(null)}
+                                            className="text-sm bg-primary text-primary-foreground px-3 py-2 rounded-md hover:opacity-90 whitespace-nowrap"
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -1025,18 +1185,68 @@ export default function ResumeBuilderPage() {
                                         Remove
                                     </button>
                                 </div>
-                                <div className="relative">
+                                {/* USERNAME + ADD LINK BUTTON */}
+                                <div className="flex gap-2">
+
+                                    {/* USERNAME INPUT */}
                                     <input
                                         type="text"
-                                        value={personalInfo.github || ""}
-                                        onChange={(e) => updateField("github", e.target.value)}
-                                        className="w-full border border-border rounded-md px-3 py-2 pr-16 bg-background"
-                                        placeholder="github.com/johndoe"
+                                        value={personalInfo.githubUsername || ""}
+                                        onChange={(e) =>
+                                            updateField("githubUsername", e.target.value)
+                                        }
+                                        placeholder="Enter your github username"
+                                        className="flex-1 border border-border rounded-md px-3 py-2 bg-background text-sm"
                                     />
-                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground bg-card border border-border rounded-full px-2 py-1 flex items-center gap-1 pointer-events-none">
-                                        <LinkIcon size={12} /> Link
-                                    </span>
+
+                                    {/* ADD / EDIT LINK BUTTON */}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setEditingLinkField(
+                                                editingLinkField === "github"
+                                                    ? null
+                                                    : "github"
+                                            )
+                                        }
+                                        className="text-xs text-muted-foreground bg-card border border-border rounded-full px-3 py-2 flex items-center gap-1 hover:border-primary hover:text-primary transition whitespace-nowrap"
+                                    >
+                                        <LinkIcon size={12} />
+
+                                        {personalInfo.github
+                                            ? "Edit Link"
+                                            : "Add Link"}
+                                    </button>
                                 </div>
+
+                                {/* ACTUAL LINK INPUT */}
+                                {editingLinkField === "github" && (
+                                    <div className="mt-2 flex gap-2">
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            value={personalInfo.github || ""}
+                                            onChange={(e) =>
+                                                updateField("github", e.target.value)
+                                            }
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    setEditingLinkField(null);
+                                                }
+                                            }}
+                                            placeholder="https://github.com/yourusername"
+                                            className="flex-1 border border-border rounded-md px-3 py-2 bg-card text-sm"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingLinkField(null)}
+                                            className="text-sm bg-primary text-primary-foreground px-3 py-2 rounded-md hover:opacity-90 whitespace-nowrap"
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 
@@ -1051,22 +1261,365 @@ export default function ResumeBuilderPage() {
                                         Remove
                                     </button>
                                 </div>
-                                <div className="relative">
+                                {/* USERNAME + ADD LINK BUTTON */}
+                                <div className="flex gap-2">
+
+                                    {/* USERNAME INPUT */}
                                     <input
                                         type="text"
-                                        value={personalInfo.website || ""}
-                                        onChange={(e) => updateField("website", e.target.value)}
-                                        className="w-full border border-border rounded-md px-3 py-2 pr-16 bg-background"
-                                        placeholder="johndoe.com"
+                                        value={personalInfo.websiteUsername || ""}
+                                        onChange={(e) =>
+                                            updateField("websiteUsername", e.target.value)
+                                        }
+                                        placeholder="Enter your website name"
+                                        className="flex-1 border border-border rounded-md px-3 py-2 bg-background text-sm"
                                     />
-                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground bg-card border border-border rounded-full px-2 py-1 flex items-center gap-1 pointer-events-none">
-                                        <LinkIcon size={12} /> Link
-                                    </span>
+
+                                    {/* ADD / EDIT LINK BUTTON */}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setEditingLinkField(
+                                                editingLinkField === "website"
+                                                    ? null
+                                                    : "website"
+                                            )
+                                        }
+                                        className="text-xs text-muted-foreground bg-card border border-border rounded-full px-3 py-2 flex items-center gap-1 hover:border-primary hover:text-primary transition whitespace-nowrap"
+                                    >
+                                        <LinkIcon size={12} />
+
+                                        {personalInfo.website
+                                            ? "Edit Link"
+                                            : "Add Link"}
+                                    </button>
                                 </div>
+
+                                {/* ACTUAL LINK INPUT */}
+                                {editingLinkField === "website" && (
+                                    <div className="mt-2 flex gap-2">
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            value={personalInfo.website || ""}
+                                            onChange={(e) =>
+                                                updateField("website", e.target.value)
+                                            }
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    setEditingLinkField(null);
+                                                }
+                                            }}
+                                            placeholder="https://website.com/"
+                                            className="flex-1 border border-border rounded-md px-3 py-2 bg-card text-sm"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingLinkField(null)}
+                                            className="text-sm bg-primary text-primary-foreground px-3 py-2 rounded-md hover:opacity-90 whitespace-nowrap"
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 
-                        {(!isFieldVisible("linkedin") || !isFieldVisible("github") || !isFieldVisible("website")) && (
+                        {isFieldVisible("Behance") && (
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-foreground">Behance</label>
+                                    <button
+                                        onClick={() => removeOptionalField("Behance")}
+                                        className="text-xs text-muted-foreground hover:text-destructive"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                                {/* USERNAME + ADD LINK BUTTON */}
+                                <div className="flex gap-2">
+
+                                    {/* USERNAME INPUT */}
+                                    <input
+                                        type="text"
+                                        value={personalInfo.BehanceUsername || ""}
+                                        onChange={(e) =>
+                                            updateField("BehanceUsername", e.target.value)
+                                        }
+                                        placeholder="Enter your Behance name"
+                                        className="flex-1 border border-border rounded-md px-3 py-2 bg-background text-sm"
+                                    />
+
+                                    {/* ADD / EDIT LINK BUTTON */}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setEditingLinkField(
+                                                editingLinkField === "Behance"
+                                                    ? null
+                                                    : "Behance"
+                                            )
+                                        }
+                                        className="text-xs text-muted-foreground bg-card border border-border rounded-full px-3 py-2 flex items-center gap-1 hover:border-primary hover:text-primary transition whitespace-nowrap"
+                                    >
+                                        <LinkIcon size={12} />
+
+                                        {personalInfo.Behance
+                                            ? "Edit Link"
+                                            : "Add Link"}
+                                    </button>
+                                </div>
+
+                                {/* ACTUAL LINK INPUT */}
+                                {editingLinkField === "Behance" && (
+                                    <div className="mt-2 flex gap-2">
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            value={personalInfo.Behance || ""}
+                                            onChange={(e) =>
+                                                updateField("Behance", e.target.value)
+                                            }
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    setEditingLinkField(null);
+                                                }
+                                            }}
+                                            placeholder="https://www.behance.net/"
+                                            className="flex-1 border border-border rounded-md px-3 py-2 bg-card text-sm"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingLinkField(null)}
+                                            className="text-sm bg-primary text-primary-foreground px-3 py-2 rounded-md hover:opacity-90 whitespace-nowrap"
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {isFieldVisible("facebook") && (
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-foreground">
+                                        Facebook
+                                    </label>
+
+                                    <button
+                                        onClick={() => removeOptionalField("facebook")}
+                                        className="text-xs text-muted-foreground hover:text-destructive"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={personalInfo.facebookUsername || ""}
+                                        onChange={(e) =>
+                                            updateField("facebookUsername", e.target.value)
+                                        }
+                                        placeholder="Enter your Facebook username"
+                                        className="flex-1 border border-border rounded-md px-3 py-2 bg-background text-sm"
+                                    />
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setEditingLinkField(
+                                                editingLinkField === "facebook"
+                                                    ? null
+                                                    : "facebook"
+                                            )
+                                        }
+                                        className="text-xs text-muted-foreground bg-card border border-border rounded-full px-3 py-2 flex items-center gap-1 hover:border-primary hover:text-primary transition whitespace-nowrap"
+                                    >
+                                        <LinkIcon size={12} />
+                                        {personalInfo.facebook ? "Edit Link" : "Add Link"}
+                                    </button>
+                                </div>
+
+                                {editingLinkField === "facebook" && (
+                                    <div className="mt-2 flex gap-2">
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            value={personalInfo.facebook || ""}
+                                            onChange={(e) =>
+                                                updateField("facebook", e.target.value)
+                                            }
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    setEditingLinkField(null);
+                                                }
+                                            }}
+                                            placeholder="https://facebook.com/yourusername"
+                                            className="flex-1 border border-border rounded-md px-3 py-2 bg-card text-sm"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingLinkField(null)}
+                                            className="text-sm bg-primary text-primary-foreground px-3 py-2 rounded-md hover:opacity-90 whitespace-nowrap"
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {isFieldVisible("instagram") && (
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-foreground">
+                                        Instagram
+                                    </label>
+
+                                    <button
+                                        onClick={() => removeOptionalField("instagram")}
+                                        className="text-xs text-muted-foreground hover:text-destructive"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={personalInfo.instagramUsername || ""}
+                                        onChange={(e) =>
+                                            updateField("instagramUsername", e.target.value)
+                                        }
+                                        placeholder="Enter your Instagram username"
+                                        className="flex-1 border border-border rounded-md px-3 py-2 bg-background text-sm"
+                                    />
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setEditingLinkField(
+                                                editingLinkField === "instagram"
+                                                    ? null
+                                                    : "instagram"
+                                            )
+                                        }
+                                        className="text-xs text-muted-foreground bg-card border border-border rounded-full px-3 py-2 flex items-center gap-1 hover:border-primary hover:text-primary transition whitespace-nowrap"
+                                    >
+                                        <LinkIcon size={12} />
+                                        {personalInfo.instagram ? "Edit Link" : "Add Link"}
+                                    </button>
+                                </div>
+
+                                {editingLinkField === "instagram" && (
+                                    <div className="mt-2 flex gap-2">
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            value={personalInfo.instagram || ""}
+                                            onChange={(e) =>
+                                                updateField("instagram", e.target.value)
+                                            }
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    setEditingLinkField(null);
+                                                }
+                                            }}
+                                            placeholder="https://instagram.com/yourusername"
+                                            className="flex-1 border border-border rounded-md px-3 py-2 bg-card text-sm"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingLinkField(null)}
+                                            className="text-sm bg-primary text-primary-foreground px-3 py-2 rounded-md hover:opacity-90 whitespace-nowrap"
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                        {isFieldVisible("twitter") && (
+                            <div>
+                                <div className="flex justify-between items-center mb-1">
+                                    <label className="block text-sm font-medium text-foreground">
+                                        Twitter / X
+                                    </label>
+
+                                    <button
+                                        onClick={() => removeOptionalField("twitter")}
+                                        className="text-xs text-muted-foreground hover:text-destructive"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={personalInfo.twitterUsername || ""}
+                                        onChange={(e) =>
+                                            updateField("twitterUsername", e.target.value)
+                                        }
+                                        placeholder="Enter your Twitter / X username"
+                                        className="flex-1 border border-border rounded-md px-3 py-2 bg-background text-sm"
+                                    />
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setEditingLinkField(
+                                                editingLinkField === "twitter"
+                                                    ? null
+                                                    : "twitter"
+                                            )
+                                        }
+                                        className="text-xs text-muted-foreground bg-card border border-border rounded-full px-3 py-2 flex items-center gap-1 hover:border-primary hover:text-primary transition whitespace-nowrap"
+                                    >
+                                        <LinkIcon size={12} />
+                                        {personalInfo.twitter ? "Edit Link" : "Add Link"}
+                                    </button>
+                                </div>
+
+                                {editingLinkField === "twitter" && (
+                                    <div className="mt-2 flex gap-2">
+                                        <input
+                                            type="text"
+                                            autoFocus
+                                            value={personalInfo.twitter || ""}
+                                            onChange={(e) =>
+                                                updateField("twitter", e.target.value)
+                                            }
+                                            onKeyDown={(e) => {
+                                                if (e.key === "Enter") {
+                                                    setEditingLinkField(null);
+                                                }
+                                            }}
+                                            placeholder="https://x.com/yourusername"
+                                            className="flex-1 border border-border rounded-md px-3 py-2 bg-card text-sm"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setEditingLinkField(null)}
+                                            className="text-sm bg-primary text-primary-foreground px-3 py-2 rounded-md hover:opacity-90 whitespace-nowrap"
+                                        >
+                                            Done
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* ADD MORE */}
+
+
+
+                        {(!isFieldVisible("linkedin") || !isFieldVisible("github") || !isFieldVisible("website") || !isFieldVisible("Behance") || !isFieldVisible("facebook") || !isFieldVisible("instagram") || !isFieldVisible("twitter")) && (
                             <div>
                                 <p className="text-sm font-medium text-foreground mb-2">Add details</p>
                                 <div className="flex flex-wrap gap-2">
@@ -1094,6 +1647,40 @@ export default function ResumeBuilderPage() {
                                             <Plus size={14} /> Portfolio Website
                                         </button>
                                     )}
+                                    {!isFieldVisible("Behance") && (
+                                        <button
+                                            onClick={() => addOptionalField("Behance")}
+                                            className="text-sm border border-border rounded-full px-3 py-1.5 hover:bg-muted transition flex items-center gap-1"
+                                        >
+                                            <Plus size={14} /> Behance
+                                        </button>
+                                    )}
+                                    {!isFieldVisible("facebook") && (
+                                        <button
+                                            onClick={() => addOptionalField("facebook")}
+                                            className="text-sm border border-border rounded-full px-3 py-1.5 hover:bg-muted transition flex items-center gap-1"
+                                        >
+                                            <Plus size={14} /> Facebook
+                                        </button>
+                                    )}
+                                    {!isFieldVisible("instagram") && (
+                                        <button
+                                            onClick={() => addOptionalField("instagram")}
+                                            className="text-sm border border-border rounded-full px-3 py-1.5 hover:bg-muted transition flex items-center gap-1"
+                                        >
+                                            <Plus size={14} /> Instagram
+                                        </button>
+                                    )}
+                                    {!isFieldVisible("twitter") && (
+                                        <button
+                                            onClick={() => addOptionalField("twitter")}
+                                            className="text-sm border border-border rounded-full px-3 py-1.5 hover:bg-muted transition flex items-center gap-1"
+                                        >
+                                            <Plus size={14} /> Twitter
+                                        </button>
+                                    )}
+                                    {/* ADD MORE */}
+
                                 </div>
                             </div>
                         )}
@@ -1519,8 +2106,86 @@ export default function ResumeBuilderPage() {
                     </div>
                 )}
 
-                {/* ============== STEP: Summary (LAST) ============== */}
+                {/* ============== STEP: Additional Sections ============== */}
                 {currentStep === 8 && (
+                    <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
+                        <div className="flex justify-between items-center gap-2">
+                            <h2 className="font-heading text-lg font-semibold text-foreground">Additional Sections</h2>
+                            <button onClick={addCustomSection} className="text-sm text-primary hover:underline font-medium whitespace-nowrap">
+                                + Add Section
+                            </button>
+                        </div>
+
+                        {customSections.length === 0 && (
+                            <p className="text-muted-foreground text-sm">
+                                Add anything that doesn't fit elsewhere — Volunteer Work, Publications, Hobbies, References, etc.
+                            </p>
+                        )}
+
+                        {customSections.map((section) => (
+                            <div key={section.id} className="border border-border rounded-md p-4 space-y-3 relative bg-background">
+                                <button
+                                    onClick={() => removeCustomSection(section.id)}
+                                    className="absolute top-3 right-3 text-destructive text-sm hover:underline"
+                                >
+                                    Remove Section
+                                </button>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-1 text-foreground">Section Title</label>
+                                    <input
+                                        type="text"
+                                        value={section.title}
+                                        onChange={(e) => updateCustomSectionTitle(section.id, e.target.value)}
+                                        className="w-full border border-border rounded-md px-3 py-2 bg-card font-semibold"
+                                        placeholder="e.g. Volunteer Experience"
+                                    />
+                                </div>
+
+                                {section.entries.map((entry) => (
+                                    <div key={entry.id} className="border border-border rounded-md p-4 space-y-2 relative bg-card">
+                                        <button
+                                            onClick={() => removeCustomEntry(section.id, entry.id)}
+                                            className="absolute top-0 right-3 text-destructive text-xs hover:underline"
+                                        >
+                                            Remove
+                                        </button>
+                                        <input
+                                            type="text"
+                                            value={entry.heading || ""}
+                                            onChange={(e) => updateCustomEntry(section.id, entry.id, "heading", e.target.value)}
+                                            className="w-full border border-border rounded-md px-3 py-2 bg-background text-sm"
+                                            placeholder="Title (e.g. Red Cross Volunteer)"
+                                        />
+                                        <input
+                                            type="text"
+                                            value={entry.subheading || ""}
+                                            onChange={(e) => updateCustomEntry(section.id, entry.id, "subheading", e.target.value)}
+                                            className="w-full border border-border rounded-md px-3 py-2 bg-background text-sm"
+                                            placeholder="Subtitle / Date (e.g. Jan 2023 - Present)"
+                                        />
+                                        <textarea
+                                            value={entry.description || ""}
+                                            onChange={(e) => updateCustomEntry(section.id, entry.id, "description", e.target.value)}
+                                            className="w-full border border-border rounded-md px-3 py-2 bg-background text-sm h-16"
+                                            placeholder="Description (optional)"
+                                        />
+                                    </div>
+                                ))}
+
+                                <button
+                                    onClick={() => addCustomEntry(section.id)}
+                                    className="text-sm text-primary hover:underline font-medium"
+                                >
+                                    + Add Entry
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* ============== STEP: Summary (LAST) ============== */}
+                {currentStep === 9 && (
                     <div className="space-y-4 border border-border bg-card rounded-lg p-6 mb-5">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
                             <div>
@@ -1545,6 +2210,8 @@ export default function ResumeBuilderPage() {
                         />
                     </div>
                 )}
+
+
 
                 {/* ============== WIZARD NAV: Back / Next ============== */}
                 <div className="flex items-center justify-between gap-3 mb-6">
@@ -1622,6 +2289,7 @@ export default function ResumeBuilderPage() {
                     certifications={certifications}
                     languages={languages}
                     achievements={achievements}
+                    customSections={customSections}
                     templateId={templateId}
                 />
             </div>

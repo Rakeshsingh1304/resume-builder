@@ -1,5 +1,6 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
+import CustomSectionsRenderer from "./CustomSectionsRenderer";
 
 const GREY = "#6B7280";
 
@@ -21,6 +22,7 @@ export default function Template6MinimalGrey({
     certifications = [],
     languages = [],
     achievements = [],
+    customSections = [],
 }: ResumeTemplateProps) {
     return (
         <div
@@ -85,6 +87,16 @@ export default function Template6MinimalGrey({
                                 className="flex items-center gap-1.5 hover:underline"
                             >
                                 <Link size={12} style={{ color: GREY }} /> {personalInfo.github}
+                            </a>
+                        )}
+                        {personalInfo.Behance && (
+                            <a
+                                href={normalizeUrl(personalInfo.Behance)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:underline"
+                            >
+                                <Link size={12} style={{ color: GREY }} /> {personalInfo.Behance}
                             </a>
                         )}
                     </div>
@@ -224,6 +236,7 @@ export default function Template6MinimalGrey({
                     </ul>
                 </div>
             )}
+            <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <Heading>{title}</Heading>} textColor="#111827" />
         </div>
     );
 }

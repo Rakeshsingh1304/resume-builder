@@ -1,6 +1,7 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 import InitialsAvatar from "./InitialsAvatar";
 import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
+import CustomSectionsRenderer from "./CustomSectionsRenderer";
 
 const PURPLE = "#9333EA";
 
@@ -22,6 +23,7 @@ export default function Template4CreativePurple({
     certifications = [],
     languages = [],
     achievements = [],
+    customSections = [],
 }: ResumeTemplateProps) {
     return (
         <div
@@ -104,6 +106,17 @@ export default function Template4CreativePurple({
                                 >
                                     <Link size={12} style={{ color: PURPLE }} className="shrink-0" />
                                     <span className="break-all">{personalInfo.github}</span>
+                                </a>
+                            )}
+                            {personalInfo.Behance && (
+                                <a
+                                    href={normalizeUrl(personalInfo.Behance)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 hover:underline"
+                                >
+                                    <Link size={12} style={{ color: PURPLE }} className="shrink-0" />
+                                    <span className="break-all">{personalInfo.Behance}</span>
                                 </a>
                             )}
                         </div>
@@ -235,6 +248,7 @@ export default function Template4CreativePurple({
                             </ul>
                         </div>
                     )}
+                    <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <Heading>{title}</Heading>} textColor="#000000" />
                 </div>
             </div>
         </div>

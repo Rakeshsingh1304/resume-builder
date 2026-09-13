@@ -1,6 +1,7 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 import InitialsAvatar from "./InitialsAvatar";
 import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
+import CustomSectionsRenderer from "./CustomSectionsRenderer";
 
 const BLUE = "#3B82F6";
 
@@ -22,6 +23,7 @@ export default function Template8Fresher({
     certifications = [],
     languages = [],
     achievements = [],
+    customSections = [],
 }: ResumeTemplateProps) {
     return (
         <div
@@ -83,6 +85,16 @@ export default function Template8Fresher({
                                 className="flex items-center gap-1.5 hover:underline"
                             >
                                 <Globe size={11} style={{ color: BLUE }} /> {personalInfo.website}
+                            </a>
+                        )}
+                        {personalInfo.Behance && (
+                            <a
+                                href={normalizeUrl(personalInfo.Behance)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:underline"
+                            >
+                                <Link size={11} style={{ color: BLUE }} /> {personalInfo.Behance}
                             </a>
                         )}
                     </div>
@@ -215,6 +227,7 @@ export default function Template8Fresher({
                     </div>
                 </div>
             )}
+            <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <Heading>{title}</Heading>} textColor="#000000" />
         </div>
     );
 }

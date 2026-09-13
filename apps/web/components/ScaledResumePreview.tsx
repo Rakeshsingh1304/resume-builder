@@ -16,6 +16,7 @@ interface Props {
     certifications?: any[];
     languages?: any[];
     achievements?: string[];
+    customSections?: any[];
     templateId?: string;
 }
 

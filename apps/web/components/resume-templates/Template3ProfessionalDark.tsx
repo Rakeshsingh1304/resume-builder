@@ -1,6 +1,7 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 import InitialsAvatar from "./InitialsAvatar";
 import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
+import CustomSectionsRenderer from "./CustomSectionsRenderer";
 
 function Heading({ children }: { children: React.ReactNode }) {
     return (
@@ -20,6 +21,7 @@ export default function Template3ProfessionalDark({
     certifications = [],
     languages = [],
     achievements = [],
+    customSections = [],
 }: ResumeTemplateProps) {
     return (
         <div
@@ -92,6 +94,17 @@ export default function Template3ProfessionalDark({
                             >
                                 <Link size={12} className="text-[#94A3B8] shrink-0" />
                                 <span className="break-all">{personalInfo.github}</span>
+                            </a>
+                        )}
+                        {personalInfo.Behance && (
+                            <a
+                                href={normalizeUrl(personalInfo.Behance)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 hover:underline"
+                            >
+                                <Link size={12} className="text-[#94A3B8] shrink-0" />
+                                <span className="break-all">{personalInfo.Behance}</span>
                             </a>
                         )}
                     </div>
@@ -236,6 +249,7 @@ export default function Template3ProfessionalDark({
                         </ul>
                     </div>
                 )}
+                <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <Heading>{title}</Heading>} textColor="#0B0F19" />
             </div>
         </div>
     );

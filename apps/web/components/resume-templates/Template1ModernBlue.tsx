@@ -1,6 +1,7 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 import InitialsAvatar from "./InitialsAvatar";
 import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
+import CustomSectionsRenderer from "./CustomSectionsRenderer";
 
 function Heading({ children }: { children: React.ReactNode }) {
     return (
@@ -20,6 +21,7 @@ export default function Template1ModernBlue({
     certifications = [],
     languages = [],
     achievements = [],
+    customSections = [],
 }: ResumeTemplateProps) {
     return (
         <div
@@ -59,37 +61,83 @@ export default function Template1ModernBlue({
                                 <span className="break-all">{personalInfo.location}</span>
                             </div>
                         )}
-                        {personalInfo.website && (
+
+                        {personalInfo.linkedinUsername && personalInfo.linkedinUsername && (
                             <a
-                                href={normalizeUrl(personalInfo.website)}
+                                href={normalizeUrl(personalInfo.linkedinUsername)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 hover:underline"
+                            >
+                                <Link size={12} className="text-[#93C5FD] shrink-0" />
+                                <span className="break-all">{personalInfo.linkedinUsername}</span>
+                            </a>
+                        )}
+                        {personalInfo.githubUsername && personalInfo.githubUsername && (
+                            <a
+                                href={normalizeUrl(personalInfo.githubUsername)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 hover:underline"
+                            >
+                                <Link size={12} className="text-[#93C5FD] shrink-0" />
+                                <span className="break-all">{personalInfo.githubUsername}</span>
+                            </a>
+                        )}
+                        {personalInfo.websiteUsername && (
+                            <a
+                                href={normalizeUrl(personalInfo.websiteUsername)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-2 hover:underline"
                             >
                                 <Globe size={12} className="text-[#93C5FD] shrink-0" />
-                                <span className="break-all">{personalInfo.website}</span>
+                                <span className="break-all">{personalInfo.websiteUsername}</span>
                             </a>
                         )}
-                        {personalInfo.linkedin && (
+                        {personalInfo.BehanceUsername && personalInfo.BehanceUsername && (
                             <a
-                                href={normalizeUrl(personalInfo.linkedin)}
+                                href={normalizeUrl(personalInfo.BehanceUsername)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-2 hover:underline"
                             >
                                 <Link size={12} className="text-[#93C5FD] shrink-0" />
-                                <span className="break-all">{personalInfo.linkedin}</span>
+                                <span className="break-all">{personalInfo.BehanceUsername}</span>
                             </a>
                         )}
-                        {personalInfo.github && (
+
+                        {personalInfo.twitterUsername && personalInfo.twitterUsername && (
                             <a
-                                href={normalizeUrl(personalInfo.github)}
+                                href={normalizeUrl(personalInfo.twitterUsername)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-2 hover:underline"
                             >
                                 <Link size={12} className="text-[#93C5FD] shrink-0" />
-                                <span className="break-all">{personalInfo.github}</span>
+                                <span className="break-all">{personalInfo.twitterUsername}</span>
+                            </a>
+                        )}
+                        {personalInfo.facebookUsername && personalInfo.facebookUsername && (
+                            <a
+                                href={normalizeUrl(personalInfo.facebookUsername)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 hover:underline"
+                            >
+                                <Link size={12} className="text-[#93C5FD] shrink-0" />
+                                <span className="break-all">{personalInfo.facebookUsername}</span>
+                            </a>
+                        )}
+                        {personalInfo.instagramUsername && personalInfo.instagramUsername && (
+                            <a
+                                href={normalizeUrl(personalInfo.instagramUsername)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 hover:underline"
+                            >
+                                <Link size={12} className="text-[#93C5FD] shrink-0" />
+                                <span className="break-all">{personalInfo.instagramUsername}</span>
                             </a>
                         )}
                     </div>
@@ -228,7 +276,7 @@ export default function Template1ModernBlue({
                         </ul>
                     </div>
                 )}
-            </div>
+                <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <Heading>{title}</Heading>} textColor="#14213D" />            </div>
         </div>
     );
 }

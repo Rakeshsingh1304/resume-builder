@@ -1,5 +1,6 @@
 import InitialsAvatar from "./InitialsAvatar";
 import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
+import CustomSectionsRenderer from "./CustomSectionsRenderer";
 
 function Heading({ children }: { children: React.ReactNode }) {
     return (
@@ -19,11 +20,12 @@ export default function Template2MinimalBlack({
     certifications = [],
     languages = [],
     achievements = [],
+    customSections = [],
 }: ResumeTemplateProps) {
     const contactLine1 = [personalInfo.phone, personalInfo.email, personalInfo.location]
         .filter(Boolean)
         .join("   |   ");
-    const contactLinks = [personalInfo.linkedin, personalInfo.github, personalInfo.website].filter(
+    const contactLinks = [personalInfo.linkedin, personalInfo.github, personalInfo.website, personalInfo.Behance].filter(
         Boolean
     ) as string[];
 
@@ -204,6 +206,7 @@ export default function Template2MinimalBlack({
                     </ul>
                 </div>
             )}
+            <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <Heading>{title}</Heading>} textColor="#14213D" />
         </div>
     );
 }

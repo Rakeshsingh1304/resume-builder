@@ -1,6 +1,7 @@
 import { Phone, Mail, MapPin, Globe, Link } from "lucide-react";
 import InitialsAvatar from "./InitialsAvatar";
 import { ResumeTemplateProps, formatDate, normalizeUrl } from "./types";
+import CustomSectionsRenderer from "./CustomSectionsRenderer";
 
 const YELLOW = "#EAB308";
 
@@ -23,6 +24,7 @@ export default function Template9CreativeYellow({
     certifications = [],
     languages = [],
     achievements = [],
+    customSections = [],
 }: ResumeTemplateProps) {
     return (
         <div
@@ -84,6 +86,16 @@ export default function Template9CreativeYellow({
                                 className="flex items-center gap-1.5 hover:underline"
                             >
                                 <Globe size={11} style={{ color: "#A16207" }} /> {personalInfo.website}
+                            </a>
+                        )}
+                        {personalInfo.Behance && (
+                            <a
+                                href={normalizeUrl(personalInfo.Behance)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 hover:underline"
+                            >
+                                <Link size={11} style={{ color: "#A16207" }} /> {personalInfo.Behance}
                             </a>
                         )}
                     </div>
@@ -224,6 +236,7 @@ export default function Template9CreativeYellow({
                     </ul>
                 </div>
             )}
+            <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <Heading>{title}</Heading>} textColor="#000000" />
         </div>
     );
 }

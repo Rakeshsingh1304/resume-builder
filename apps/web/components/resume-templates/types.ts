@@ -5,9 +5,20 @@ export interface PersonalInfo {
     phone?: string;
     location?: string;
     linkedin?: string;
+    linkedinUsername?: string;
     github?: string;
+    githubUsername?: string;
     website?: string;
+    websiteUsername?: string;
     photoUrl?: string;
+    Behance?: string;
+    BehanceUsername?: string;
+    twitterUsername?: string;
+    twitter?: string;
+    facebookUsername?: string;
+    facebook?: string;
+    instagramUsername?: string;
+    instagram?: string;
 }
 
 export interface ExperienceEntry {
@@ -63,6 +74,7 @@ export interface ResumeTemplateProps {
     certifications?: CertificationEntry[];
     languages?: LanguageEntry[];
     achievements?: string[];
+    customSections?: CustomSection[];
 }
 
 export function formatDate(dateStr?: string) {
@@ -82,4 +94,17 @@ export function normalizeUrl(url?: string): string {
         return trimmed;
     }
     return `https://${trimmed}`;
+}
+
+export interface CustomSectionEntry {
+    id: string;
+    heading?: string;
+    subheading?: string;
+    description?: string;
+}
+
+export interface CustomSection {
+    id: string;
+    title: string;
+    entries: CustomSectionEntry[];
 }
