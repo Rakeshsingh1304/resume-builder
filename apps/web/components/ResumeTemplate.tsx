@@ -404,40 +404,6 @@ export default function ResumeTemplate({
                 </div>
             )}
 
-            {/* Skills */}
-            {skills.length > 0 && (
-                <div style={avoidBreak}>
-                    <SectionHeading>Skills</SectionHeading>
-                    <div className="flex flex-wrap gap-2">
-                        {skills.map((skill) => (
-                            <span
-                                key={skill}
-                                className="text-[12px] bg-[#F0EFEA] text-[#14213D] px-2.5 py-1 rounded-full font-medium"
-                            >
-                                {skill}
-                            </span>
-                        ))}
-                    </div>
-                    <SectionDivider />
-                </div>
-            )}
-
-            {/* Languages */}
-            {languages.length > 0 && (
-                <div style={avoidBreak}>
-                    <SectionHeading>Languages</SectionHeading>
-                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-[13px] text-gray-800">
-                        {languages.map((lang) => (
-                            <span key={lang.id}>
-                                <span className="font-semibold text-[#14213D]">{lang.name}</span>
-                                <span className="text-gray-500"> ({lang.proficiency})</span>
-                            </span>
-                        ))}
-                    </div>
-                    <SectionDivider />
-                </div>
-            )}
-
             {/* Achievements */}
             {achievements.length > 0 && (
                 <div style={avoidBreak}>
@@ -449,8 +415,49 @@ export default function ResumeTemplate({
                             </li>
                         ))}
                     </ul>
+                    <SectionDivider />
                 </div>
             )}
-            <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <SectionHeading>{title}</SectionHeading>} textColor="#14213D" />        </div>
+            <CustomSectionsRenderer customSections={customSections} renderHeading={(title) => <SectionHeading>{title}</SectionHeading>} textColor="#14213D" divider={<SectionDivider />} />
+            {/* Skills */}
+            {
+                skills.length > 0 && (
+                    <div style={avoidBreak}>
+                        <SectionHeading>Skills</SectionHeading>
+                        <div className="flex flex-wrap gap-2">
+                            {skills.map((skill) => (
+                                <span
+                                    key={skill}
+                                    className="text-[12px] bg-[#F0EFEA] text-[#14213D] px-2.5 py-1 rounded-full font-medium"
+                                >
+                                    {skill}
+                                </span>
+                            ))}
+                        </div>
+                        <SectionDivider />
+                    </div>
+                )
+            }
+
+            {/* Languages */}
+            {
+                languages.length > 0 && (
+                    <div style={avoidBreak}>
+                        <SectionHeading>Languages</SectionHeading>
+                        <div className="flex flex-wrap gap-x-6 gap-y-1 text-[13px] text-gray-800">
+                            {languages.map((lang) => (
+                                <span key={lang.id}>
+                                    <span className="font-semibold text-[#14213D]">{lang.name}</span>
+                                    <span className="text-gray-500"> ({lang.proficiency})</span>
+                                </span>
+                            ))}
+                        </div>
+                        <SectionDivider />
+                    </div>
+                )
+            }
+
+
+        </div >
     );
 }

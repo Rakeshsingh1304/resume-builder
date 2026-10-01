@@ -3,11 +3,9 @@ import React from "react";
 
 interface Props {
     customSections?: CustomSection[];
-    // Each template passes ITS OWN heading component here, so custom
-    // sections always look pixel-identical to that template's real
-    // section headings — no guessing colors/styles separately.
     renderHeading: (title: string) => React.ReactNode;
     textColor?: string;
+    divider?: React.ReactNode;
 }
 
 // Shared by EVERY template — renders any user-defined custom sections
@@ -16,6 +14,7 @@ export default function CustomSectionsRenderer({
     customSections = [],
     renderHeading,
     textColor = "#14213D",
+    divider,
 }: Props) {
     if (!customSections || customSections.length === 0) return null;
 
@@ -47,6 +46,7 @@ export default function CustomSectionsRenderer({
                             )}
                         </div>
                     ))}
+                    {divider}
                 </div>
             ))}
         </>
